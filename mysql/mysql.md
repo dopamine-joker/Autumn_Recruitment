@@ -550,7 +550,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
 15. **utf8和utf8mb4的区别**
 
-    utf8最多只支持三个字节的UTF-8字符，如chat(100) mysql会为这个字段保留300字节长度（因为一个UTF-8最多三字节）。但保存emoji字符和一些不常用汉字需要4个字节，这时候就需要使用utf8mb4了。
+    utf8最多只支持三个字节的UTF-8字符，如char(100) mysql会为这个字段保留300字节长度（因为一个UTF-8最多三字节）。但保存emoji字符和一些不常用汉字需要4个字节，这时候就需要使用utf8mb4了。
 
 
 
