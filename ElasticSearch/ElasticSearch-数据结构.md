@@ -1,6 +1,6 @@
 # ElasticSearch 数据结构
 
-> dopamine-joker整理归纳
+> dopamine-joker整理归纳，原文http://dopaminer.xyz/2021/08/05/ElasticSearch-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/#more
 
 Elasticsearch(简称ES)是基于Lucene库实现的开源搜索引擎，其是作为Elastic Stack的核心的分布式搜索和分析引擎，可对所有数据提供近实时的搜索和分析。
 
