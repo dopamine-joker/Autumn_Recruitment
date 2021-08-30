@@ -10,7 +10,7 @@
 
 **用户程序**`Mutator`通过**内存分配器**`Allocator`在**堆**`Heap`上申请内存，垃圾回收器`Collector`会定时清理**堆**上的内存。内存分配器和垃圾收集器共同管理着程序中的堆内存空间。  
 
-![img](https://pic1.zhimg.com/80/v2-b5bbefb490ee186879a50d76a6150e28_720w.jpg)
+![image-20210905130252060](https://i.loli.net/2021/09/05/1yY5Fjm92Nvdlsu.png)
 
 ## (2) **垃圾回收常见算法**
 
