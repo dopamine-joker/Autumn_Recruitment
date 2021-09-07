@@ -560,12 +560,14 @@ redis> ZADD price 8.5 apple 5.0 banana 6.0 cherry
     使用字典的原因是可以以O(1)复杂度查找某个成员的分值
 
     ![image-20210822130440255](https://i.loli.net/2021/08/30/cy8HoRpk7ntBdrO.png)
+    
+    ![image-20210822124758642](https://i.loli.net/2021/08/30/DLz4h5cgdAMvjxi.png)
 
 ### 6. 内存回收
 
 使用引用计数
 
-![image-20210822124758642](https://i.loli.net/2021/08/30/DLz4h5cgdAMvjxi.png)
+
 
 ### 7. 对象共享
 
