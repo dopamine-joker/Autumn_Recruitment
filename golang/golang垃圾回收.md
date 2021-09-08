@@ -10,7 +10,7 @@
 
 **用户程序**`Mutator`通过**内存分配器**`Allocator`在**堆**`Heap`上申请内存，垃圾回收器`Collector`会定时清理**堆**上的内存。内存分配器和垃圾收集器共同管理着程序中的堆内存空间。  
 
-![image-20210905130252060](https://i.loli.net/2021/09/05/1yY5Fjm92Nvdlsu.png)
+![image-20210908154309631](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908154309631.png)
 
 ## (2) **垃圾回收常见算法**
 
@@ -276,4 +276,4 @@ func HybridWritePointerSimple(slot *unsafe.Pointer, ptr unsafe.Pointer) {
 
 场景四：某个对象从栈对象的下游变成堆对象的下游，对于栈空间对象不触发写屏障，但是对于被删除的堆空间对象`G`需要标记成灰色以保护它和它的下游对象不被错误删除
 
-![img](https://pic4.zhimg.com/80/v2-a87f234312af61ccb642170745b06493_720w.jpg)
+![img](https://gitee.com/dopamine-joker/image-host/raw/master/image/v2-a87f234312af61ccb642170745b06493_720w.jpg)

@@ -31,10 +31,10 @@ https://blog.csdn.net/wangfeijiu/article/details/112454405
    https://blog.csdn.net/why15732625998/article/details/80439315#commentBox
 
    **修正，blog中2.3标题为页锁**
+   
+   ![image-20210908160424901](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160424901.png)
 
-![image-20210403134631266](https://i.loli.net/2021/08/30/SWV1KnTcMRxj7Hs.png)
-
-![image-20210403134647163](https://i.loli.net/2021/08/30/LOZjdRSlHb6ICzf.png)
+![image-20210908160327613](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160327613.png)
 
 # 4. [数据库事务隔离级别](https://blog.csdn.net/riemann_/article/details/89901626?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161720291516780357280628%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=161720291516780357280628&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-1-89901626.first_rank_v2_pc_rank_v29&utm_term=%E6%95%B0%E6%8D%AE%E5%BA%93%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB&spm=1018.2226.3001.4187)
 
@@ -56,7 +56,7 @@ https://blog.csdn.net/wangfeijiu/article/details/112454405
   
   <font color=red>大多数数据库默认的事务隔离级别是**Read committed**，比如Sql Server , Oracle。Mysql的默认隔离级别是**Repeatable read**。</font>
   
-  ![image-20210403151128946](https://i.loli.net/2021/08/30/VkGsyvtmfwPIhYj.png)
+  ![image-20210908160302805](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160302805.png)
 
 # 5. [Mysql的MVCC(多版本并发控制)机制](https://blog.csdn.net/riemann_/article/details/94838870?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161720399616780271574701%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=161720399616780271574701&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-94838870.first_rank_v2_pc_rank_v29&utm_term=MVCC&spm=1018.2226.3001.4187)
 
@@ -234,17 +234,17 @@ InnoDB**辅助索引**的访问需要**两次索引查找**，第一次从辅助
 
 B+树 叶子节点包含数据表中行记录就是**聚簇索引**（索引和数据是一块的）。
 
-![image-20210405191221735](https://i.loli.net/2021/08/30/EyuRJ3H4hqvdYLf.png)
+![image-20210908160527591](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160527591.png)
 
 B+树 叶子节点没包含数据表中行记录就是**非聚簇索引**（索引和数据是分开的）。
 
-![image-20210405191238765](https://i.loli.net/2021/08/30/gmXFxrTHkMWN4SC.png)
+![image-20210908160539364](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160539364.png)
 
 MyISAM也使用B+Tree作为索引结构，但具体实现方式却与InnoDB截然不同。**MyISAM使用的都是非聚簇索引**
 
-![image-20210405191312610](https://i.loli.net/2021/08/30/UvPyBVlMJ4baQLi.png)
+![image-20210908160548013](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160548013.png)
 
-![image-20210403152319881](https://i.loli.net/2021/08/30/g2u6Ef7pNK8BIx3.png)
+![image-20210908160637731](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160637731.png)
 
  **InnoDB索引**和**MyISAM索引**的区别:
 
@@ -388,7 +388,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
    mysql注入的例子:
 
-![image-20210403153023142](https://i.loli.net/2021/08/30/ihjIsB8znVrtNxc.png)
+![image-20210908160800573](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160800573.png)
 
 6. **sql注入的主要特点**
 
@@ -481,7 +481,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
     Hash索引本身确实不支持范围查询，因为它是通过Hash算法来存储的。Memory引擎中使用Hash索引，但是使用Memory引擎的表是可以进行范围查询的，只是它在范围查询时Hash索引会失效。
 
-![image-20210405201703590](https://i.loli.net/2021/08/30/u2XY7gwx8Q4DSLz.png)
+![image-20210908160832572](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160832572.png)
 
 13. **分析SQL的执行**
 
@@ -673,11 +673,11 @@ MyISAM也使用B+Tree数据结构存储索引，但**都是非聚簇索引**。
 
 哈希索引就是采用一定的哈希算法，把键值换算成新的哈希值，检索时不需要类似B+树那样从根节点到叶子节点逐级查找，只需**一次哈希算法**即可立刻定位到相应的位置，速度非常快。**Memory存储引擎使用Hash**。
 
-![image-20210405194924658](https://i.loli.net/2021/08/30/g2u6Ef7pNK8BIx3.png)
+![image-20210908161043196](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161043196.png)
 
 **HASH索引本身是不支持范围查询的，但是如使用Memory存储引擎的表还是可以进行范围查询操作，只是此时的HASH索引会失效**
 
-![image-20210405201413908](https://i.loli.net/2021/08/30/me31I8lcPJjUwgO.png)
+![image-20210908160905548](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160905548.png)
 
 # 19. 回表和索引覆盖
 

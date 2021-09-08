@@ -179,7 +179,7 @@ OK
 
 redis会创建一个键值对，其中键值对的键和值就是SDS对象。
 
-![image-20210821192756979](https://i.loli.net/2021/08/30/7HG1FWQhBa3wAct.png)
+![image-20210908161200703](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161200703.png)
 
 1. SDS优化字符扩展内存重分配策略
 
@@ -196,7 +196,7 @@ redis会创建一个键值对，其中键值对的键和值就是SDS对象。
 
 3. SDS和C字符串的区别
 
-    ![image-20210821193552207](https://i.loli.net/2021/08/30/X1efxuKBoGTvQVE.png)
+    ![image-20210908161210091](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161210091.png)
 
 ## 5. 链表
 
@@ -213,13 +213,13 @@ redis > LRANGE integers 0 2
 
 1. 链表节点
 
-![image-20210821193720248](https://i.loli.net/2021/08/30/G7MboQtPFrW6jNg.png)
+![image-20210908161217230](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161217230.png)
 
 2. 链表
 
-    ![image-20210821193819944](https://i.loli.net/2021/08/30/thridZTR5Ez7bJI.png)
+    ![image-20210908161227675](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161227675.png)
 
-    ![image-20210821193830573](https://i.loli.net/2021/08/30/spwNbDzxtXHBA1P.png)
+    ![image-20210908161240821](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161240821.png)
 
     3. 链表的特性
 
@@ -266,37 +266,39 @@ website键的底层实现就是一个字典，字典中包含了10086个键值�
 
 2. **哈希表**
 
-    ![image-20210821195021587](https://i.loli.net/2021/08/30/QjWnv3XsGYEpfTe.png)
+    ![image-20210908161304955](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161304955.png)
 
     
 
 table是一个数组，数组中的每一个元素指向`dict.h/dictEntry`结构的指针，每一个`dictEntry结构`保存一个键值对。
 
-![image-20210821195219318](https://i.loli.net/2021/08/30/wEVHBJTut6pYaCo.png)
+![image-20210908161313171](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161313171.png)
 
 3. **哈希表节点**
 
-![image-20210821195405461](https://i.loli.net/2021/08/30/AOp4WDb9lYCn61T.png)
+![image-20210908161324797](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161324797.png)
 
-![image-20210821195510499](https://i.loli.net/2021/08/30/aSqXkLj1Ty4r87N.png)
+![image-20210908161331860](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161331860.png)
 
 4. **字典**
 
-![image-20210821195609146](https://i.loli.net/2021/08/30/HWtipMDr2xqLZAF.png)
+![image-20210908161757908](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161757908.png)
 
-![image-20210821195625404](https://i.loli.net/2021/08/30/3DVlEbQjuo9OCFt.png)
+![image-20210908161811546](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161811546.png)
 
-![image-20210821195743062](https://i.loli.net/2021/08/30/MZVWFjCNJOhakf9.png)
+![image-20210908161817971](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161817971.png)
 
 5. **哈希算法**
 
     添加键值对(k0,v0)步骤
 
-    ![image-20210821195915260](https://i.loli.net/2021/08/30/7hQXfRdTnPSlxLq.png)
+    ![image-20210908161841096](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161841096.png)
 
 6. **rehash**
 
-    ![image-20210821200456373](https://i.loli.net/2021/08/30/BMsgYpPV1HNOlQS.png)
+    ![image-20210908161916513](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161916513.png)
+    
+    ![image-20210908162025236](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162025236.png)
 
 ## 7. 跳表
 
@@ -320,15 +322,15 @@ fruit-price有序集合中的所有数据保存在一个**跳跃表**里面，�
 
 2. 跳跃表节点
 
-    ![image-20210821202211296](https://i.loli.net/2021/08/30/csi24notMl3BRj1.png)
+    ![image-20210908162108485](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162108485.png)
 
-    ![image-20210821202219523](https://i.loli.net/2021/08/30/Evn1UjzA9PdxJZk.png)
+    ![image-20210908162115464](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162115464.png)
 
     > 虚线是遍历的走向
 
 3. 跳跃表
 
-    ![image-20210821202401773](https://i.loli.net/2021/08/30/8kxvOJ35qWe4wyc.png)
+    ![image-20210908162319363](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162319363.png)
 
 ## 8. 整数集合
 
@@ -360,17 +362,17 @@ OK
 
 Redis每个对象都由redisObject结构表示。
 
-![image-20210822111946987](https://i.loli.net/2021/08/30/BwAGcKvpQ13qMSD.png)
+![image-20210908162340155](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162340155.png)
 
 对于redis数据库保存的键值对，**键总是一个字符串对象**，而值可以是**字符串对象**，**列表对象**，**哈希对象**，**集合对象**或**有序集合对象**
 
 对于type字段记录对象的类型，其中的值如下:
 
-![image-20210822112717085](https://i.loli.net/2021/08/30/iQmfJSqb3Ldw5Gh.png)
+![image-20210908162348282](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162348282.png)
 
 对于TYPE命令返回的就是数值库**键**对应的**值对象的类型**，而不是键对象的类型。
 
-![image-20210822112050019](https://i.loli.net/2021/08/30/faAYdgHsbRpoimJ.png)
+![image-20210908162410466](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162410466.png)
 
 ### 1. **字符串对象(string**
 
@@ -387,7 +389,7 @@ Redis每个对象都由redisObject结构表示。
     "int"
     ```
 
-    ![image-20210822130129791](https://i.loli.net/2021/08/30/gV3M1sqUZjFCHkz.png)
+    ![image-20210908162503121](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162503121.png)
 
 - raw编码
 
@@ -402,7 +404,7 @@ Redis每个对象都由redisObject结构表示。
     "raw"
     ```
 
-    ![image-20210822112654039](https://i.loli.net/2021/08/30/ucBtwdRsxQlG7TM.png)
+    ![image-20210908162530338](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162530338.png)
 
 
 
@@ -412,9 +414,9 @@ Redis每个对象都由redisObject结构表示。
 
     embstr编码专门用于保存短字符串，这种编码和raw编码一样也是使用redisObject和sdshdr结构，但是embstr通过**一次内存分配**分配一块连续空间存储redisObject和sdshdr结构，而raw要调用两次内存分配来分别创建。
 
-    ![image-20210822113114730](https://i.loli.net/2021/08/30/AHUmfkZyYQTzoxw.png)
+    ![image-20210908162611899](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162611899.png)
 
-    ![image-20210822113208658](https://i.loli.net/2021/08/30/UoZ8hePTOJAltiv.png)
+    ![image-20210908162604809](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162604809.png)
 
     ```sh
     redis> SET msg "hello"
@@ -425,7 +427,7 @@ Redis每个对象都由redisObject结构表示。
 
     注意long double类型表示的浮点数也是使用字符串值来保存。
 
-    ![image-20210822113338559](https://i.loli.net/2021/08/30/lPVHfjAqcD85Q1K.png)
+    ![image-20210908162648980](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162648980.png)
 
 ### 2. 列表对象(list)
 
@@ -439,13 +441,13 @@ Redis每个对象都由redisObject结构表示。
 
     (2) 列表对象保存元素的数量**小于512个**
 
-    ![image-20210822114021219](https://i.loli.net/2021/08/30/jo2UcZNtpLesn6A.png)
+    ![image-20210908163300730](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163300730.png)
 
 - linkedlist
 
     不i能同时满足ziplist使用条件的就使用linkedlist
 
-    ![image-20210822114034197](https://i.loli.net/2021/08/30/A5WyoKiBHPGhIbl.png)
+    ![image-20210908163250017](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163250017.png)
 
 - **quicklist**
 
@@ -464,11 +466,11 @@ Redis每个对象都由redisObject结构表示。
     - **保存了统一键值对得两个节点总是紧挨在一起，保存键得节点在前，保存值的节点在后**
     - **先添加到哈希对象的键值对会放在压缩列表的表头方向，而后来添加到哈希对象中的键值会放在压缩列表的表尾方向**
 
-    ![image-20210822120120252](https://i.loli.net/2021/08/30/Wfg43vNBiMmZjux.png)
+    ![image-20210908163555731](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163555731.png)
 
     如果profile键创建的是ziplist编码对象
 
-    ![image-20210822120110645](https://i.loli.net/2021/08/30/9N4zcAdanCUDQKf.png)
+    ![image-20210908163529031](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163529031.png)
 
     当满足下列情况，使用ziplist编码
     (1) 哈希对象保存的所有键值对的键和值的字符串长度都小于64字节
@@ -484,7 +486,7 @@ Redis每个对象都由redisObject结构表示。
 
     如果profile键创建的是hashtable对象
 
-    ![image-20210822120408709](https://i.loli.net/2021/08/30/KWLfDyQJpct6FBE.png)
+    ![image-20210908163609739](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163609739.png)
 
     不满足使用ziplist编码条件的使用hashtable
 
@@ -512,7 +514,7 @@ redis> SADD Dfruits "apple" "banana" "cherry"
 (integer)3
 ```
 
-![image-20210822122103138](https://i.loli.net/2021/08/30/KkriqJRwVy1C9Yl.png)
+![image-20210908163717907](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163717907.png)
 
 ### 5. 有序集合对象zset
 
@@ -534,9 +536,9 @@ redis> ZADD price 8.5 apple 5.0 banana 6.0 cherry
 
 如果price使用ziplist编码，则
 
-![image-20210822123602941](https://i.loli.net/2021/08/30/oMekgKWEh8XyUJR.png)
+![image-20210908163825995](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163825995.png)
 
-![image-20210822123607629](https://i.loli.net/2021/08/30/hoFq2fnWv8KCwAx.png)
+![image-20210908163818482](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163818482.png)
 
 - **skiplist**
 
@@ -549,19 +551,19 @@ redis> ZADD price 8.5 apple 5.0 banana 6.0 cherry
     } zset
     ```
 
-    ![image-20210822124115182](https://i.loli.net/2021/08/30/2rvBojSCepNYTPl.png)
+    ![image-20210908163921572](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163921572.png)
 
-    如果上述fruit使用skiplist实现，则
+    如果上述price使用skiplist实现，则
 
-    ![image-20210822124212602](https://i.loli.net/2021/08/30/AXBUVnSRWO1wYJD.png)
+    ![image-20210908164121022](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908164121022.png)
 
     值得注意的是，其实**zset中的跳跃表和字典都会通过指针来共享相同的元素的成员和分值**，不会造成额外空间浪费
 
     使用字典的原因是可以以O(1)复杂度查找某个成员的分值
 
-    ![image-20210822130440255](https://i.loli.net/2021/08/30/cy8HoRpk7ntBdrO.png)
+    ![image-20210908164222515](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908164222515.png)
     
-    ![image-20210822124758642](https://i.loli.net/2021/08/30/DLz4h5cgdAMvjxi.png)
+    ![image-20210908163906516](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163906516.png)
 
 ### 6. 内存回收
 
@@ -573,7 +575,9 @@ redis> ZADD price 8.5 apple 5.0 banana 6.0 cherry
 
 键A和键B都创建一个包含整数值100的字符串对象
 
-![image-20210822124907239](https://i.loli.net/2021/08/30/BXuGJgUCnS48wdr.png)
+![image-20210908164233920](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908164233920.png)
+
+![image-20210908164246226](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908164246226.png)
 
 redis的对象引用，只对value >= 0 && value < OBJ_SHARED_INTEGERS的数值类对象生效，除此之外的其他redis对象，都不会相互引用。OBJ_SHARED_INTEGERS 在系统中默认是10000。为了标记这种可被复用的对象，引用计数值会被标记成 INT_MAX
 
