@@ -374,7 +374,7 @@ Redis每个对象都由redisObject结构表示。
 
 ![image-20210908162410466](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908162410466.png)
 
-### 1. **字符串对象(string**
+### 1. **字符串对象(string)**
 
 字符串对象的编码可以是**int**,**raw**或者**embstr**
 

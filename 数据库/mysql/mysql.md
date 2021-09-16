@@ -2,9 +2,23 @@
 
 https://blog.csdn.net/wangfeijiu/article/details/112454405
 
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20210126212911166.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdmZWlqaXU=,size_16,color_FFFFFF,t_70)
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20210130005455679.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdmZWlqaXU=,size_16,color_FFFFFF,t_70)
+
 # 2. 事务四个特性ACID
 
 **事务**具有四个特征：原子性（ Atomicity ）、一致性（ Consistency ）、隔离性（ Isolation ）和持续性（ Durability ）。这四个特性简称为 ACID 特性。
+
+转账:
+
+```mysql
+start transaction;
+select balance from checking where customer_id = 10233276;
+update checking set balance = balance - 200.00 where customer_id = 10233276;
+update savings set balance = balance + 200.00 where customer_id = 10233276;
+commit;
+```
 
 1 、**原子性**
 
@@ -12,11 +26,11 @@ https://blog.csdn.net/wangfeijiu/article/details/112454405
 
 2 、**一致性**
 
-数据库在事务执行前后都保持**一致性状态**。在一致性状态下，所有事务对同一个数据的读取结果都是相同的。举例来说，假设用户A和用户B两者的钱加起来一共是1000，那么不管A和B之间如何转账、转几次账，事务结束后两个用户的钱相加起来应该还得是1000，这就是事务的一致性。
+数据库总是从一个一致性的状态转换到另一个一致性的状态。举例来说，假设用户A和用户B两者的钱加起来一共是1000，那么不管A和B之间如何转账、转几次账，事务结束后两个用户的钱相加起来应该还得是1000，这就是事务的一致性。
 
 3 、**隔离性**
 
-一个事务所做的修改在最终提交以前，对其它事务是不可见的。
+一个事务所做的修改在最终提交以前，对其它事务是不可见的。在例子中，执行完第三条语句，第四条未开始时，另外一个转账事务看到的checking.balance并没有减去200.
 
 4 、**持续性**
 
@@ -60,29 +74,51 @@ https://blog.csdn.net/wangfeijiu/article/details/112454405
 
 # 5. [Mysql的MVCC(多版本并发控制)机制](https://blog.csdn.net/riemann_/article/details/94838870?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161720399616780271574701%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=161720399616780271574701&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-94838870.first_rank_v2_pc_rank_v29&utm_term=MVCC&spm=1018.2226.3001.4187)
 
+https://zhuanlan.zhihu.com/p/148035779
+
 **多版本并发控制**（Multi-Version Concurrency Control, MVCC）是 MySQL 的 **InnoDB** 存储引擎实现隔离级别的一种具体方式，用于实现提交读和可重复读这两种隔离级别。而未提交读隔离级别总是读取最新的数据行，要求很低，无需使用 MVCC。可串行化隔离级别需要对所有读取的行都加锁，单纯使用 MVCC 无法实现。
 
-MVCC是通过在**每行记录后面保存两个隐藏的列**来实现的。这两个列，**一个保存了行的创建时间，一个保存行的过期时间（或删除时间）**。当然存储的并不是实际的时间值，而是系统版本号（system version number)。每开始一个新的事务，系统版本号都会自动递增。事务开始时刻的系统版本号会作为事务的版本号，用来和查询到的每行记录的版本号进行比较。
+MVCC是通过在**每行记录后面保存两个隐藏的列**来实现的。这两个列，**一个保存了行的创建时间，一个保存行的过期时间（或删除时间）**。当然存储的并不是实际的时间值，而是**系统版本号（system version number)**。每开始一个新的事务，系统版本号都会自动递增。事务开始时刻的系统版本号会作为事务的版本号，用来和查询到的每行记录的版本号进行比较。
+
+![img](https://img-blog.csdnimg.cn/20200531214014768.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzMjU1MDE3,size_16,color_FFFFFF,t_70)
+
+如图中所示，假如三个事务更新了同一行数据，那么就会有对应的三个数据版本。实际上版本1、版本2并非实际物理存在的，而图中的U1和U2实际就是**undo log**，这v1和v2版本是根据当前v3和undo log计算出来的。
+
 下面看一下在**REPEATABLE READ**隔离级别下，MVCC具体是如何操作的。
 
 **SELECT**
 InnoDB会根据以下两个条件检查每行记录：
 1、InnoDB只查找版本早于当前事务版本的数据行（也就是，行的系统版本号小于或等于事务的系统版本号），这样可以确保事务读取的行，要么是在事务开始前已经存在的，要么是事务自身插入或者修改过的。
 2、行的删除版本要么未定义，要么大于当前事务版本号。这可以确保事务读取到的行，在事务开始之前未被删除。
-只有符合上述两个条件的记录，才能返回作为查询结果。
+**只有符合上述两个条件的记录，才能返回作为查询结果**。
 **INSERT**
 InnoDB为新插入的每一行保存当前系统版本号作为行版本号。
 **DELETE**
 InnoDB为删除的每一行保存当前系统版本号作为行删除标识。
+
+![image-20210912091918211](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091918211.png)
+
+![image-20210912091853965](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091853965.png)
+
 **UPDATE**
 InnoDB为插入一行新记录，保存当前系统版本号作为行版本号，同时保存当前系统版本号到原来的行作为行删除标识。
 保存这两个额外系统版本号，使大多数读操作都可以不用加锁。这样设计使得读数据操作很简单，性能很好，并且也能保证只会读取到符合标准的行，不足之处是每行记录都需要额外的存储空间，需要做更多的行检查工作，以及一些额外的维护工作
+
+![image-20210912091947277](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091947277.png)
 
 # 6. Next-Key Locks
 
 Next-Key Locks 是 MySQL 的 InnoDB 存储引擎的一种锁实现。
 
-**MVCC 不能解决幻读问题**，Next-Key Locks 就是为了解决这个问题而存在的。在可重复读（REPEATABLE READ）隔离级别下，使用 MVCC + Next-Key Locks 可以解决幻读问题。
+**MVCC 不能完全解决幻读问题(可以解决一部分)**，Next-Key Locks 就是为了解决这个问题而存在的。在可重复读（REPEATABLE READ）隔离级别下，使用 MVCC + Next-Key Locks 可以解决幻读问题。
+
+**<a name="hd">MVCC不能解决幻读举例</a>**
+
+[click](](https://ac.nowcoder.com/discuss/230450?type=6))
+
+![image-20210912110202171](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912110202171.png)
+
+这里为什么update会涉及到444这一行？因为<font color=red>select是快照读，update是当前读</font>
 
 **InnoDB有三种行锁的算法：**
 
@@ -92,7 +128,7 @@ Next-Key Locks 是 MySQL 的 InnoDB 存储引擎的一种锁实现。
 
 如果表没有设置索引，InnoDB 会自动在主键上创建隐藏的聚簇索引，因此 Record Locks 依然可以使用。
 
-2. **Gap Locks** : 间隙锁，锁定一个范围，但不包括记录本身。GAP锁的目的，是为了防止同一事务的两次当前读，出现幻读的情况。
+2. **Gap Locks** : 间隙锁，锁定一个范围，但不包括记录本身。GAP锁的目的，是为了**防止同一事务的两次当前读，出现幻读的情况**。InnoDB默认加锁方式。
 
 锁定索引之间的间隙，但是不包含索引本身。例如当一个事务执行以下语句，其它事务就不能在 t.c 中插入 15。
 
@@ -460,7 +496,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
     - 组合索引，不是使用第一列索引，索引失效。
     - 数据类型出现隐式转化。如varchar不加单引号的话可能会自动转换为int型，使索引无效，产生全表扫描。
     - (在索引列上使用 IS NULL 或 IS NOT NULL操作，索引不一定失效)[https://mp.weixin.qq.com/s/CEJFsDBizdl0SvugGX7UmQ]！！！
-    - 在索引字段上使用not，<>，!=。不等于操作符是永远不会用到索引的，因此对它的处理只会产生全表扫描。 优化方法： key<>0 改为 key>0 or key<0W
+    - 在索引字段上使用not，<>，!=。不等于操作符是永远不会用到索引的，因此对它的处理只会产生全表扫描。 优化方法： key<>0 改为 key>0 or key<0
     - 对索引字段进行计算操作、字段上使用函数
     - 当全表扫描速度比索引速度快时，mysql会使用全表扫描，此时索引失效
 
@@ -491,7 +527,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
 15. **utf8和utf8mb4的区别**
 
-    utf8最多只支持三个字节的UTF-8字符，如chat(100) mysql会为这个字段保留300字节长度（因为一个UTF-8最多三字节）。但保存emoji字符和一些不常用汉字需要4个字节，这时候就需要使用utf8mb4了。
+    utf8最多只支持三个字节的UTF-8字符，如char(100) mysql会为这个字段保留300字节长度（因为一个UTF-8最多三字节）。但保存emoji字符和一些不常用汉字需要4个字节，这时候就需要使用utf8mb4了。
 
 # 9. group_by 原理
 
@@ -575,7 +611,7 @@ B+树的特征：
 # 13. 为什么B+树比B树更适合作索引
 
 1. **B+ 树的磁盘读写代价更低**
-    B+ 树的数据都集中在叶子节点，分支节点 只负责指针（索引）；B 树的分支节点既有指针也有数据 。这将导致B+ 树的层高会小于B 树的层高，也就是说B+ 树平均的Io次数会小于B 树。
+    B+ 树的数据都集中在叶子节点，分支节点 只负责指针（索引）；B 树的分支节点既有指针也有数据 。这将导致B+ 树的层高会小于B 树的层高，也就是说B+ 树平均的I/O次数会小于B 树。
 2. **B+ 树的查询效率更加稳定**
     B+ 树的数据都存放在叶子节点，故任何关键字的查找必须走一条从根节点到叶子节点的路径。所有关键字的查询路径相同，每个数据查询效率相当。
 3. **B+树更便于遍历**
@@ -651,8 +687,6 @@ InnoDB 表是基于聚簇索引建立的。因此InnoDB 的索引能提供一种
 
 MyISAM也使用B+Tree数据结构存储索引，但**都是非聚簇索引**。
 
-1. **聚簇索引**
-
 以下是MyISAM主键索引存储图
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/2021020100081078.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dhbmdmZWlqaXU=,size_16,color_FFFFFF,t_70)
@@ -661,7 +695,7 @@ MyISAM也使用B+Tree数据结构存储索引，但**都是非聚簇索引**。
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20210201001937236.png)
 
-2. **非聚簇索引(辅助索引)**
+​	**非聚簇索引(辅助索引)**
 
 在MyISAM中，主索引和辅助索引（Secondary key）在结构上没有任何区别，**只是主索引要求key是唯一的，而辅助索引的key可以重复**。如果我们在Col2上建立一个辅助索引，则此索引的结构如下图所示：
 
@@ -814,3 +848,69 @@ redo和binlog这两种日志有以下三点不同：
  1、 redo log 是 InnoDB 引擎特有的；binlog 是 MySQL 的 Server 层实现的，所有引擎都可以使用。
  2、 redo log 是物理日志，记录的是“在某个数据页上做了什么修改”；binlog 是逻辑日志，记录的是这个语句的原始逻辑，比如“给 ID=2 这一行的 c 字段加 1 ”。
  3、redo log 是循环写的，空间固定会用完；binlog 是可以追加写入的。“追加写”是指 binlog 文件写到一定大小后会切换到下一个，并不会覆盖以前的日志。
+
+# 27. [锁](https://zhuanlan.zhihu.com/p/95207161)
+
+1. **共享锁((shared)S锁，读锁)**
+
+    事务A给数据对象1加上S锁，则事务A**可以读取数据**对象1但是**不能修改**。其他事务也只能再对数据对象加S锁，不能加X锁。
+
+    这保证其他事务**可以读取**数据对象1而**不能修改**。
+
+2. **排它锁(X锁，写锁)**
+
+    事务A给数据对象1加上S锁，则数据对象**可以读取**1对象也**可以修改**1对象。其他事务**不能再对数据对象1加任何锁**。
+
+3. **意向共享锁(IS)与意向排它锁(IX)**
+
+    事务想要获取表中某些记录的共享锁，需要在表上先加共享意向锁。
+
+    事务想要获取表中某些记录的互斥锁，需要在表上先加共享排它锁。
+
+    这两个统称意向锁。是为了支持**Innodb支持多粒度锁**
+
+    <font color=red>意向锁是表级锁</font>
+
+    理由:当我们需要给一个加表锁的时候，我们需要根据意向锁去判断表中有没有数据行被锁定，以确定是否能加成功。如果意向锁是行锁，那么我们就得遍历表中所有数据行来判断。如果意向锁是表锁，则我们直接判断一次就知道表中是否有数据行被锁定了。所以说将意向锁设置成表级别的锁的性能比行锁高的多。
+
+    有了意向锁之后，前面例子中的事务A在申请行锁（写锁）之前，数据库会自动先给事务A申请表的意向排他锁。当事务B去申请表的写锁时就会失败，因为表上有意向排他锁之后事务B申请表的写锁时会被阻塞。
+
+    所以，**意向锁的作用**就是：
+
+    当一个事务在需要获取资源的锁定时，如果该资源**已经被排他锁占用**，则数据库会自动给该事务**申请一个该表的意向锁**。
+
+    如果自己需要一个**共享锁**，就申请一个**意向共享锁**。如果需要的是**某行（或者某些行）的排他锁**，则申请一个**意向排他锁**。
+
+4. **乐观锁**
+
+    乐观锁不是数据库自带的，需要我们自己去实现。乐观锁是指操作数据库时(更新操作)，想法很乐观，认为这次的操作不会导致冲突，在操作数据时，并不进行任何其他的特殊处理（也就是不加锁），而在进行更新后，再去判断是否有冲突了。
+
+5. **悲观锁**
+
+    悲观锁，正如其名，它指的是对数据被外界（包括本系统当前的其他事务，以及来自外部系统的事务处理）修改持保守态度，因此，在整个数据处理过程中，将数据处于锁定状态。悲观锁的实现，往往依靠数据库提供的锁机制（也只有数据库层提供的锁机制才能真正保证数据访问的排他性，否则，即使在本系统中实现了加锁机制，也无法保证外部系统不会修改数据）
+
+6. **间隙锁(Gap Locks)**
+
+    一般是针对**非唯一索引**而言的，间隙锁（Gap Lock）是Innodb在<font color=red>可重复读</font>提交下为了**解决幻读问题**时引入的锁机制。([这里MVCC还是可能会出现幻读情况](#hd))
+
+7. **next-key lock**
+
+    记录锁和间隙锁的结合，同样用来解决**幻读问题**，对于InnoDB中，更新非唯一索引对应的记录。会加上Next-Key Lock。如果更新记录为空，就不能加记录锁，只能加间隙锁。
+
+# 28. 快照读，当前读
+
+**当前读**, 读取的是最新版本, 并且**对读取的记录加锁, 阻塞其他事务同时改动相同**记录，避免出现安全问题。如update，这也是MVCC会幻读的原因。
+
+快照读，单纯的select操作，**不包括**上述 select ... lock in share mode, select ... for update。　　　　
+
+- Read Committed隔离级别：每次select都生成一个快照读。
+- Read Repeatable隔离级别：**开启事务后第一个select语句才是快照读的地方，而不是一开启事务就快照读。**
+
+
+
+# 29. join
+
+1. Left join
+2. right join
+3. outer join
+4. 
