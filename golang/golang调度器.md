@@ -47,7 +47,7 @@ P - processor, a resource that is required to execute Go code.
 
     然后，一个**新的goroutine**或者**准备运行的goroutines**会唤醒一个`P`以便来服务这个goroutine。然后这个`P`将会创建一个与内核线程相关联的`M`。
 
-    ![image-20210911221833089](C:/Users/78620/AppData/Roaming/Typora/typora-user-images/image-20210911221833089.png)
+    ![image-20210916183056266](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210916183056266.png)
 
     然而，像P那样，如果一个没有被使用的`M`(即**此时没有等待运行的goroutine**)从系统调用中返回，或甚至被垃圾收集器强制停止，则它会返回到空闲的`M`队列中。
 
