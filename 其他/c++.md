@@ -329,15 +329,172 @@ int main() {
         cout << s4->d << endl;
     ```
 
-    # 19. 移动构造函数
+# 19. 移动构造函数
 
     1) 我们用对象a初始化对象b，后对象a我们就不在使用了，但是对象a的空间还在呀（在析构之前），既然拷贝构造函数，实际上就是把a对象的内容复制一份到b中，那么为什么我们不能直接使用a的空间呢？这样就避免了新的空间的分配，大大降低了构造的成本。这就是移动构造函数设计的初衷；
     2) 移动构造函数的参数和拷贝构造函数不同，拷贝构造函数的参数是一个左值引用，但是移动构造函数的初值是一个右值引用。意味着，移动构造函数的参数是一个右值或者将亡值的引用。也就是说，只用用一个右值，或者将亡值初始化另一个对象的时候，才会调用移动构造函数。而那个move语句，就是将一个左值变成一个将亡值。
 
-    
 
-    # 20. C++临时变量做返回值
+​    
+
+# 20. C++临时变量做返回值
 
     函数调用结束后，返回值被临时存储到**寄存器**中，并**没有放到堆或栈**中，也就是说与内存没有关系了。当退出函数的时候，临时变量可能被销毁，但是返回值却被放到寄存器中与临时变量的生命周期没有关系
 
+
+
+# 21. C++ 空指针调用成员函数
+
+c++中本质成员函数就是在参数列表中在增加一个this指针，因此在成员函数中不用到this指针的话还是可以调用的。而虚函数就不行，因此空指针没有虚函数指针指向虚函数表
+
+```c++
+#include <iostream>
+
+using namespace std;
+
+class A {
+private:
+    A() {}
+public:
+    virtual void show() {
+        cout << "show()" << endl;
+    }
+    void show2() {
+        cout << "show2()" << endl;
+    }
+
+};
+
+int main() {
+    A* a = nullptr;
+    a->show();			//出错
+    a->show2();			//"show()2"
+    return 0;
+}
+```
+
+# 22. [C++万能引用，引用折叠，完美转发](https://www.cnblogs.com/jmliao/p/14327117.html)
+
+1. **万能引用**
+
+    C++ 11中有万能引用（Universal Reference）的概念：**使用`T&&`类型的形参既能绑定右值，又能绑定左值**。
+
+    但是注意了：**只有发生类型推导(class T)的时候，T&&才表示万能引用**；否则，只能表示右值引用。
+
+    ```c++
+    template<typename T>
+    void func(T&& param) {
+        std::cout << param << std::endl;
+    }
     
+    void func2(int&& param) {
+        std::cout << param << std::endl;
+    }
+    
+    
+    int main() {
+        int num = 3;
+        func2(num);		//报错
+        func2(3);		//允许	
+        func(num);		////允许
+        func(3);		////允许
+    }
+    ```
+
+2. **引用折叠**
+
+    一个模板函数，根据定义的形参和传入的实参的类型，我们可以有下面四中组合:
+
+    ```shell
+    左值-左值 T& 	& 	# 函数定义的形参类型是左值引用，传入的实参是左值引用
+    左值-右值 T& 	&& 	# 函数定义的形参类型是左值引用，传入的实参是右值引用
+    右值-左值 T&& 	& 	# 函数定义的形参类型是右值引用，传入的实参是左值引用
+    右值-右值 T&& 	&& 	# 函数定义的形参类型是右值引用，传入的实参是右值引用
+    ```
+
+    即就是前面三种情况代表的都是左值引用，而第四种代表的右值引用。
+
+    就是左值引用会传染，只有纯右值&& && = &&，沾上一个左值引用就变左值引用了
+
+    具体规则是： 
+     1.所有右值引用折叠到右值引用上仍然是一个右值引用。（A&& && 变成 A&&） 
+     2.所有的其他引用类型之间的折叠都将变成左值引用。 （A& & 变成 A&; A& && 变成 A&; A&& & 变成 A&）    
+
+    ```c++
+    #include <iostream>
+    #include <boost/type_index.hpp>
+    
+    using boost::typeindex::type_id_with_cvr;
+    
+    template<typename T>
+    void PrintTYpe(T &&param) {     //万能引用
+        std::cout << "T type:" << type_id_with_cvr<T>().pretty_name() << std::endl;
+        std::cout << "param type:" << type_id_with_cvr<decltype(param)>().pretty_name() << std::endl;
+    }
+    
+    int main () {
+        int &&rvalue_reference_a = 3;
+        PrintTYpe(rvalue_reference_a);		//传入左值
+        PrintTYpe(3);						//传入右值
+    }
+    ```
+
+    ```shell
+    T type:int&
+    param type:int&
+    T type:int
+    param type:int&&
+    ```
+
+3. **完美转发**
+
+    完美转发 = 引用折叠 + 万能引用 + std::forward
+
+    调用模板函数给另一个函数传值时，为了将参数类型保持原本状态传入函数，需要使用完美转发std:forwrad\<T\>() 
+
+    ```c++
+    template<typename T>
+    void print(T &t) {
+        std::cout << "左值" << std::endl;
+    }
+    
+    template<typename T>
+    void print(T &&t) {
+        std::cout << "右值" << std::endl;
+    }
+    
+    template<typename T>
+    void test_forward(T &&v) {
+        print(v);
+        print(std::forward<T>(v));
+        print(std::move(v));
+    }
+    
+    int main() {
+        int num = 3;
+        test_forward(num);
+        std::cout << "=====" << std::endl;
+        test_forward(4);
+    }
+    ```
+
+    ```shell
+    左值
+    左值
+    右值
+    =====
+    左值
+    右值
+    右值
+    ```
+
+# 23. 空类的大小
+
+​	1字节
+
+​	如果有子类继承空类后，子类有自己的数据成员，空基类的字节不会加到子类中。
+
+# 24. RAII与RTTI
+
+RTTI是”Runtime Type Information”的缩写，意思是运行时类型信息，它提供了运行时确定对象类型的方法。RTTI并不是什么新的东西，很早就有了这个技术，但是，在实际应用中使用的比较少而已。
+
