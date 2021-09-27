@@ -445,7 +445,7 @@ Redis每个对象都由redisObject结构表示。
 
 - linkedlist
 
-    不i能同时满足ziplist使用条件的就使用linkedlist
+    不能同时满足ziplist使用条件的就使用linkedlist
 
     ![image-20210908163250017](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908163250017.png)
 
