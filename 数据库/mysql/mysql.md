@@ -918,7 +918,7 @@ redo和binlog这两种日志有以下三点不同：
 
 # 30. 联合索引底层结构怎么样
 
-![Selection_003](H:/Selection_003.png)![Selection_003](https://gitee.com/dopamine-joker/image-host/raw/master/image/Selection_003.png)
+![Selection_003](https://gitee.com/dopamine-joker/image-host/raw/master/image/Selection_003.png)
 
 这里同样使用b+树，不过排序时按照字段的顺序来，先比较第一个字段的大小，再比较第二个...依次类推来排序的。
 
