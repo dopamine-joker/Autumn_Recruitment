@@ -913,4 +913,40 @@ redo和binlog这两种日志有以下三点不同：
 1. Left join
 2. right join
 3. outer join
-4. 
+
+ 
+
+# 30. 联合索引底层结构怎么样
+
+![Selection_003](H:/Selection_003.png)![Selection_003](https://gitee.com/dopamine-joker/image-host/raw/master/image/Selection_003.png)
+
+这里同样使用b+树，不过排序时按照字段的顺序来，先比较第一个字段的大小，再比较第二个...依次类推来排序的。
+
+**这也是最左前缀原则**，若不使用最左边的字段，而直接使用后面的，而可以看到其实在索引中这几个字段并不是有序的。比如跳过name字段，直接使用age字段，如where age = 30，可以看到即使定位到age30这个节点，后面的age也并不是有序的。若此时使用where name='Bill' and age > 30, 则发现在name为'bill'的节点中，age是有序的。此时可以使用**索引查找**。
+
+# 31. ACID如何保证
+
+A原子性由undo log日志保证，它记录了需要回滚的日志信息，事务回滚时撤销已经执行成功的sql
+
+B一致性由其他三大特性来保证，程序代码要保证业务上的一致性
+
+I隔离性由MVCC来保证
+
+D持久性由**内存+redo log**来保证，mysql修改数据同时在内存和redo log记录这次操作，宕机时可以从redo log恢复。
+
+```shell
+InnoDB redo log 写盘， InnoDB事务进入prepare状态
+如果前面prepare成功，bin log写盘，再继续将事务日志持久化到binlog,如果持久化成功。那么InnoDB事务则进入commit状态(在redo log里面写一个commit 记录)
+```
+
+redolog的刷盘会在系统空闲时进行。
+
+# 32. MYSQL主从同步
+
+![image-20211004000114393](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20211004000114393.png)
+
+![image-20211004000142576](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20211004000142576.png)
+
+# 33. MVCC版本链
+
+https://blog.csdn.net/weixin_41582192/article/details/111545118
