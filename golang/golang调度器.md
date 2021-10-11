@@ -9,9 +9,9 @@ https://www.jianshu.com/p/d01dd0d4cdd0
 ```
 GMP调度模型的主要概念
 G - goroutine (go协程)
-M - worker, or machine (工作的内核线程)
+M - worker, or machine (工作的内核线程)一个M直接关联一个内核线程
 P - processor, a resource that is required to execute Go code.
-    M must have an associated P to execute Go code[...].
+    M must have an associated P to execute Go code[...]. 可理解为M的上下文
 ```
 
 其中P是一个比较抽象的概念。并不是特指物理机上的CPU。可以理解为M执行时的上下文。
