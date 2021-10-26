@@ -272,7 +272,7 @@ B+树 叶子节点包含数据表中行记录就是**聚簇索引**（索引和�
 
 ![image-20210908160527591](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160527591.png)
 
-B+树 叶子节点没包含数据表中行记录就是**非聚簇索引**（索引和数据是分开的）。
+B+树 叶子节点没包含数据表中行记录就是**非聚簇索引**（索引和数据是分开的）。innodb中辅助索引保存的是索引值和**主键值**，而在MyISAN保存的是索引值和**行指针**。
 
 ![image-20210908160539364](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160539364.png)
 
@@ -663,6 +663,8 @@ InnoDB使用B+Tree数据结构存储索引，根据索引物理结构可将索�
 
 如果InnoBD表没有主键且没有适合的唯一索引（没有构成该唯一索引的所有列都NOT NULL），MySQL将自动创建一个隐藏的名字为“`GEN_CLUST_INDEX` ”的聚簇索引。
 
+**Memory引擎有一种特殊功能叫“自适应哈希索引”，InnoDB注意到某些索引值被使用得特别频繁时，则会在内存中基于B+Tree上再创建一个哈希索引，这样就让索引也有哈希索引的一些特点，比如快速的哈希查找。这是一个完全自动的，内部的行为，用户无法控制或者配置，不过如果有必要，完全可以关闭该功能。**
+
 **因此每个InnoDB表都有且仅有一个聚簇索引**。
 
 1) **聚簇索引**
@@ -701,11 +703,25 @@ MyISAM也使用B+Tree数据结构存储索引，但**都是非聚簇索引**。
 
 # 17. InnoDB和MyISAM中的聚簇索引和非聚簇(辅助)索引
 
+innodb中辅助索引保存的是索引值和**主键值**，而在MyISAN保存的是索引值和**行指针**。 
+
 ![img](https://img2018.cnblogs.com/i-beta/1464190/201911/1464190-20191106151527647-152458631.png)
 
 # 18. HASH索引
 
 哈希索引就是采用一定的哈希算法，把键值换算成新的哈希值，检索时不需要类似B+树那样从根节点到叶子节点逐级查找，只需**一次哈希算法**即可立刻定位到相应的位置，速度非常快。**Memory存储引擎使用Hash**。
+
+hash索引只保存哈希值和数据指针。
+
+**小技巧**:
+
+如当要对url列进行**搜索查找**时，直接对url建立索引查找时会很慢，这时候可以对url先进行CRC32哈希，然后对这个哈希值建索引。搜索时这样搜索会快得多。注意这里url_crc是额外建立的列，用来建立索引。注意如果哈希冲突了，则必须在where条件中带上列值+哈希值。
+
+```sql
+select id from url where url="http://www.mysql.com" and url_crc = CRC32("http://www.mysql.com")
+```
+
+
 
 ![image-20210908161043196](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161043196.png)
 
@@ -800,7 +816,37 @@ select id,name,sex ... order by name limit 500,100;
 
 在MySQL建立联合索引时会遵守最左前缀匹配原则，即最左优先（查询条件精确匹配索引的左边连续一列或几列，则构建对应列的组合索引树），在检索数据时也从联合索引的最左边开始匹配。
 
+---
+
 当我们创建一个组合索引的时候，如 (a1,a2,a3)，相当于创建了（a1）、(a1,a2)和(a1,a2,a3)三个索引，这就是最左匹配原则。
+
+若有order by的场景，则可以通过让order by中的顺序和索引的列顺序一定来达到利用索引排序的效果。
+
+但也有一种情况可以让order by子句不用满足最左前缀原则，即前导列为常量的时候。
+
+如有索引rental_date(rental_date, inventory_id, customer_id)
+
+```mysql
+select rental_id, staff_id from sakila.rental where rental_date = '2005-05-25'
+	order by inventory_id, customer_id
+```
+
+这种查询则还是可以使用索引进行排序。即使order by不满足索引的最左前缀要求，也可以用于查询排序，这是因为索引的第一列被指定为一个常数。
+
+这种也可以
+
+```mysql
+where rental_date > '2005-05-25' order by rental_date, inventory_id
+```
+
+下面是不可以使用索引排序的查询
+
+```mysql
+1. 查询四用了两种不同的排序方向，但是索引列都是正序排序的 
+...where rental_date = '2005-05-25' order by inventory_id desc, customer_Id asc;
+```
+
+
 
 # 24. 前缀索引
 
@@ -952,3 +998,197 @@ redolog的刷盘会在系统空闲时进行。
 # 33. MVCC版本链
 
 https://blog.csdn.net/weixin_41582192/article/details/111545118
+
+# 34. 高性能索引策略
+
+- **独立的列**
+
+    索引不能是表达式的一部分，也不能是函数的参数。
+
+    如下列查询无法使用`actor_id`索引
+
+    应该尽量把索引单独放在一边
+
+    ```mysql
+    mysql> select actor_id from sakila.actor where actor_id + 1 = 5;
+    mysql> select ... where TO_DAYS(CURRENT_DATE) - TO_DAYS(date_col) <= 10;
+    ```
+
+- **前缀索引和索引选择性**
+
+    索引很长的字符列
+
+    (1) 给字符列增加一个哈希字段列，模拟哈希查询
+
+    (2) 索引最开始的部分字符(前缀索引)
+
+    如何确定前缀索引的长度？
+
+    看下述例子
+
+    ```mysql
+    mysql> select count(distinct city)/count(*) from sakila.city_demo; # 计算城市区分对总数的占比
+    +-----------------------------+
+    |COUNT(DISTINCT city)/COUNT(*)|
+    +-----------------------------+
+    |						0.0312|
+    +-----------------------------+
+    
+    mysql> select count(distinct LEFT(city, 3))/count(*) AS sel3,
+    	-> count(distinct LEFT(city, 4))/count(*) AS sel4,
+    	-> count(distinct LEFT(city, 5))/count(*) AS sel5,
+    	-> count(distinct LEFT(city, 6))/count(*) AS sel6,
+    	-> count(distinct LEFT(city, 7))/count(*) AS sel7,
+    	-> from sakila.city_demo;	#计算各种长度，看对城市的区分度的占比，这里可以看到长度为4或5就已经很接近了
+    +----------------------------------+
+    | sel3 | sel4 | sel5 | sel6 | sel7 |
+    +----------------------------------+
+    |0.0239|0.0293|0.0305|0.0309|0.0310|
+    +----------------------------------+
+    ```
+
+    注意这种情况如果数据分布不均匀会有陷阱
+
+    ```mysql
+    mysql> select count(*) as cnt, left(city, 4) as pref
+    	-> from sakila.city_demo group by pref order by cnt desc limit 5;
+    +-----+------+
+    | cnt | pref |
+    +-----+------+
+    | 205 | San  |
+    | 200 | Sant |
+    | 135 | Sout |
+    | 104 | Chan |
+    | 91  | Toul |
+    +-----+------+
+    ```
+
+    这里可以看到Sant和San有重复的部分。
+
+- **多列索引(联合索引)**
+
+- **选择合适列顺序**
+
+    将选择性高的放前面，举例
+
+    ```mysql
+    mysql> select * from payment where staff_id = 2 and customer_id = 584;
+    ```
+
+    这里要创建索引(staff_id, customer_id)还是(customer_id, staff_id)呢？应该得看哪个列的选择性更高。
+
+    ```mysql
+    mysql> select sum(staff_id = 2), sum(customer_id = 584) from paymeng\G;
+    
+    SUM(staff_id = 2): 7992
+    SUM(customer_id = 584): 30
+    ```
+
+    可以看到customer_id的过滤性更高，即数量更少，所以应该是(customer_id, staff_id)
+
+    **当然这么优化非常依赖具体值**。
+    
+- **innodb中按顺序插入行**
+
+    最简单就是使用auto_increment。避免随机插入，比如使用UUID来做聚餐索引，性能会很低，因为这使得插入完全随机。 
+
+    这种随机插入的缺点:
+
+    - 写入的目标可能已经刷到磁盘上并从缓存中移除，或者是还没有被加载到缓存中，InnoDB在插入之前不得不找到并从磁盘上读取目标页到内存中。这将导致大量的随机I/O。
+
+    - 因为写入是乱序的，InnoDB不得不频繁地做页分裂操作，以便为新的行分配空间。**页分裂**会导致移动大量数据，一次插入最少需要修改三个页而不是一个页。
+
+        > **页分裂(page split)**，当行的主键值要求必须将这一行插入到某个已满的页中时，存储引擎会将该页分裂成两个页面来容纳该行，这就是一次页分裂操作。页分裂会导致表占用更多的磁盘空间。
+
+    - 由于频繁的页分裂，页会变得稀疏并被不规则地填充，所以最终数据会有碎片。
+
+    这些随机插入后可以使用OPTIMIZE TABLE来重建优化。
+    
+- **索引使用技巧**
+
+    1. 比如对于(sex, country)索引，我们可以使用set in('m', 'f')条件从而得到使用sex索引的目的
+
+    2. 尽可能把范围查询放在后面，比如(sex, country, region, age)中age一般是基于范围查询的。**<font color=red>查询只能使用索引的最左前缀，直到遇到第一个范围条件列</font>**。
+
+        当然这种情况也可以使用age in(xx,xx,xx...)形式，但是不能滥用，因为每增加一个`IN()`条件，优化器需要做的组合就以指数形式增加，最终降低查询性能。如
+
+        ```mysql
+        where eye_color IN('brown','blue','hazel')
+        	AND hair_color IN('black', 'red', 'blonde', 'brown')
+        	AND sex	IN('M', 'F')
+        ```
+
+        优化器会转化为4\*3\*3=24种组合。
+
+- **避免多个范围条件**
+
+    ```mysql
+    where eye_color IN('brown','blue','hazel')
+    	AND hair_color IN('black', 'red', 'blonde', 'brown')
+    	AND sex	IN('M', 'F')
+    	AND last_online > DATE_SUB(NOW(), INTERVAL 7 DAY)	
+    	AND age BETWEEN 18 AND 25
+    ```
+
+    这里在使用了last_online范围查询后，age的范围查询就不能使用索引了。因此last_online可以用active字段代替，0代表7周内没上线，1代表有，这种做法active列并不是完全精确的，但它可以让age范围查询走到索引。
+
+- **limit使用索引覆盖优化**
+
+    https://juejin.cn/post/6844903939247177741
+
+# 35. optimize table
+
+使用mysql的时候，可能会发现尽管一张表删除了许多数据，但是这张表的数据文件和索引文件大小却没有变小。这是因为mysql在删除数据(特别是有Text和BLOB)时，会在原来被删除的位置留下数据空洞，等待新数据来填充。这种空洞不仅额外增加了存储代价，而且还因为数据碎片化降低了表的扫描效率。因此可以通过optimize table + 表名 来优化去除这些空洞。
+
+注意使用时mysql会锁表。并且该命令只对myisam,bdb和innodb起作用。
+
+# 36. [innodb_autoinc_lock_mode调优](https://www.cnblogs.com/widgetbox/p/10178035.html)
+
+https://blog.csdn.net/corleone_4ever/article/details/106700787
+
+https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html#innodb-auto-increment-initialization
+
+1. 三种insert
+
+    - **simple insert**
+
+        insert时就可以知道插入的行数量，包括没有嵌套的单行或多行的insert，replace，但不包括insert...onduplicate key update.
+
+    - **bulk inserts**
+
+        插入时不知道要插入多少条数据，包括insert ... select, replace..select, load data语句。innodb在处理自增行(auto_increment)时，每次都会分配一个新值。
+
+    - **Mixed-mode inserts**
+
+        插入时制定了部分(不是全部)新行的auto_increment值。如
+
+        ```mysql
+        INSERT INTO t1 (c1,c2) VALUES (1,'a'), (NULL,'b'), (5,'c'), (NULL,'d');
+        ```
+
+2. **`innodb_autoinc_lock_mode`三种模式**
+
+    首先，该参数仅在InnoDB引擎下生效，myisam引擎下，无论什么样自增id锁都是表级锁
+    0：traditonal （每次都会产生表锁）
+    1：consecutive （mysql的默认模式，会产生一个轻量锁，simple insert会获得批量的锁，保证连续插入）
+    2：interleaved （不会锁表，来一个处理一个，并发最高）
+
+    **如何理解，以及参数如何选择？**
+
+    1、innodb_autoinc_lock_mode为0时的，也就是官方说的traditional级别
+
+    该自增锁是**表锁级别**，且**必须等待当前SQL执行完成后或者回滚掉才会释放**，这样在高并发的情况下可想而知自增锁竞争是比较大的。
+
+    这种模式下，所有的insert语句在开始时都会获得一个表锁autoinc_lock.该锁会一直持有到insert语句执行结束才会被释放。对于一条insert插入多个行记录的语句，他保证了同一条语句插入的行记录的自增ID是连续的。
+    **这个锁并不是事务级别的锁**。
+    在这种模式下，**主从复制**时，**基于语句复制模式**下，主和从的同一张表的同一个行记录的自增ID是一样的。但是同样基于语句复制模式下，interleaved模式，也就是innodb_autoinc_lock_mode=2时则不能保证主从同一张表的同一个行记录的自增ID一样。
+    这种模式下，表的并发性最低。
+
+    2、innodb_autoinc_lock_mode为1时的，也就是官方说的consecutive级别
+
+    这种模式下，insert语句在开始时会获得一个表锁autoinc_lock, simple insert在获取到需要增加的ID的量后，autoinc_lock就会被释放,不必等到语句执行结束。但对于bulk insert，自增锁会被一直持有直到语句执行结束才会被释放。
+
+    3、innodb_autoinc_lock_mode为2时，也就是官方说的interleaved 级别
+
+    这种模式下，simple insert语句能保证ID是连续的，但是bulk insert的ID则可能有空洞。
+    主从复制的同一张表下的同一行id有可能不一样。

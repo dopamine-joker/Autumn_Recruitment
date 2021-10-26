@@ -162,6 +162,8 @@ type slice struct {
 
 ![image-20211009051005557](https://gitee.com/dopamine-joker/image-host/raw/master/202110090510730.png)
 
+<font color=red>**注意nil切片也可以使用append**</font>
+
 **空切片**
 
 ![image-20211009051211557](https://gitee.com/dopamine-joker/image-host/raw/master/202110090512753.png)
@@ -583,3 +585,423 @@ type Map struct {
 # 18. waitgroup wait()后不能再add()了
 
 # 19. GOMAXPROCS修改的是P，不是M
+
+# 20. 切片，映射，通道，接口和函数类型都是引用类型
+
+# 21. interface{}接口内存布局
+
+<font color=red>**interface{} 16字节**</font>
+
+内存模型
+
+![image-20211012234757134](https://gitee.com/dopamine-joker/image-host/raw/master/202110122347210.png)
+
+方法集规则
+
+![image-20211012235009967](https://gitee.com/dopamine-joker/image-host/raw/master/202110122350021.png)
+
+# 22. 嵌套地址相等验证
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type Person interface {
+	call()
+}
+
+type man struct {
+	name string
+}
+
+type son struct {
+	man
+}
+
+func (s *man) call() {
+	fmt.Println(s.name)
+}
+
+func main() {
+	s := &son{
+		man{
+			name: "name",
+		},
+	}
+	fmt.Printf("%v\n", reflect.ValueOf(s.call).Pointer())
+	fmt.Printf("%v\n", reflect.ValueOf(s.man.call).Pointer())
+	fmt.Printf("%v\n", &s.name)
+	fmt.Printf("%v\n", &s.man.name)
+}
+```
+
+# 23. GOMAXPROCS(1)
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+)
+
+func main() {
+	runtime.GOMAXPROCS(1)
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println("A:", i)
+		}()
+	}
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			fmt.Println("B:", i)
+		}(i)
+	}
+
+	fmt.Println("main end loop")
+	wg.Wait()
+	fmt.Println("main exit")
+}
+```
+
+```go
+///output
+main end loop
+B: 9
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+A: 10
+B: 0
+B: 1
+B: 2
+B: 3
+B: 4
+B: 5
+B: 6
+B: 7
+B: 8
+main exit
+```
+
+为什么是先输出了9,然后其他按顺序输出?
+
+https://blog.csdn.net/zhangdell/article/details/116979998
+
+可以看到“---main end loop---”总是最先输出，表明在1个操作系统线程的情况下，只有main协程执行到wg.Wait()阻塞等待时，其子协程才能被执行，而子协程的执行顺序正好对应于它们入队列的顺序。
+
+其中Go1.13.8和Go1.14.6，在实现上和早期版本有一点不同，每增加一个子协程就把其对应的函数地址存放到”\_p\_.runnext“，而把”\_p\_.runnext“原来的地址（即上一个子协程对应的函数地址）移动到队列”\_p\_.runq“里面，这样当执行到wg.Wait()时，”\_p\_.runnext“存放的就是最后一个子协程对应的函数地址（即输出B: ９的那个子协程）。
+
+当开始执行子协程对应的函数时，首先执行”\_p\_.runnext“对应的函数，然后按先进先出的顺序执行队列”\_p\_.runq“里的函数。所以这就解释了为什么总是B：9打在第一个，而后面打印的则是进入队列的顺序。
+
+这里一次性把一个goroutine的内容全部都输出了这是因为执行时间过短，还来不及调度就已经执行完了。
+
+相关源码：$GOROOT/src/runtime/proc.go
+
+**个人理解**
+
+runnext一般来说存的是当前G(这里是main)准备的下一个可以运行的G，如果当前运行的G的时间片还有时间，那么runnext的这个G就会继承当前的G继续运行，这样可以减少先把runnext的G放入队列中，然后再去runq拿出来运行的时延。但如果此时有新的G创建，则这个在runnext的老的G只能将其移动到runq队列中，然后新的G放到runq中。由于上述代码中main运行到wait中阻塞了，此时把P让出来，这时候由于打印9的这个G刚好在runnext中，直接拿出来运行，随后才去一个个运行runq中的G。
+
+# 24. sync.pool
+
+https://www.jianshu.com/p/8fbbf6c012b2
+
+https://www.cnblogs.com/sunsky303/p/9706210.html
+
+```go
+// A Pool is a set of temporary objects that may be individually saved and
+// retrieved.
+//
+// Any item stored in the Pool may be removed automatically at any time without
+// notification. If the Pool holds the only reference when this happens, the
+// item might be deallocated.
+//
+// A Pool is safe for use by multiple goroutines simultaneously.
+//
+// Pool's purpose is to cache allocated but unused items for later reuse,
+// relieving pressure on the garbage collector. That is, it makes it easy to
+// build efficient, thread-safe free lists. However, it is not suitable for all
+// free lists.
+//
+// An appropriate use of a Pool is to manage a group of temporary items
+// silently shared among and potentially reused by concurrent independent
+// clients of a package. Pool provides a way to amortize allocation overhead
+// across many clients.
+//
+// An example of good use of a Pool is in the fmt package, which maintains a
+// dynamically-sized store of temporary output buffers. The store scales under
+// load (when many goroutines are actively printing) and shrinks when
+// quiescent.
+//
+// On the other hand, a free list maintained as part of a short-lived object is
+// not a suitable use for a Pool, since the overhead does not amortize well in
+// that scenario. It is more efficient to have such objects implement their own
+// free list.
+//
+// A Pool must not be copied after first use.
+type Pool struct {
+	noCopy noCopy
+
+	local     unsafe.Pointer // local fixed-size per-P pool, actual type is [P]poolLocal
+	localSize uintptr        // size of the local array
+
+	victim     unsafe.Pointer // local from previous cycle
+	victimSize uintptr        // size of victims array
+
+	// New optionally specifies a function to generate
+	// a value when Get would otherwise return nil.
+	// It may not be changed concurrently with calls to Get.
+	New func() interface{}
+}
+
+// Local per-P Pool appendix.
+type poolLocalInternal struct {
+	private interface{} // Can be used only by the respective P.
+	shared  poolChain   // Local P can pushHead/popHead; any P can popTail.
+}
+
+type poolLocal struct {
+	poolLocalInternal
+
+	// Prevents false sharing on widespread platforms with
+	// 128 mod (cache line size) = 0 .
+	pad [128 - unsafe.Sizeof(poolLocalInternal{})%128]byte
+}
+```
+
+为了使得在多个goroutine中高效的使用goroutine，sync.Pool为每个P(对应CPU)都分配一个本地池，当执行Get或者Put操作的时候，会先将goroutine和某个P的子池关联，再对该子池进行操作。  **每个P的子池分为私有对象和共享列表对象**，私有对象只能被特定的P访问，共享列表对象可以被任何P访问。因为同一时刻一个P只能执行一个goroutine，所以无需加锁，但是对共享列表对象进行操作时，因为可能有多个goroutine同时操作，所以需要加锁。
+
+值得注意的是poolLocal结构体中有个pad成员，目的是为了防止false sharing。cache使用中常见的一个问题是false sharing。当不同的线程同时读写同一cache line上不同数据时就可能发生false sharing。false  sharing会导致多核处理器上严重的系统性能下降。具体的可以参考[伪共享(False Sharing)](http://ifeve.com/falsesharing/)。
+
+- local这里面真正的是[P]poolLocal其中P就是GPM模型中的P，有多少个P数组就有多大，也就是每个P维护了一个本地的poolLocal。
+- poolLocal里面维护了一个private一个shared，看名字其实就很明显了，private是给自己用的，而shared的是一个队列，可以给别人用的。注释写的也很清楚，自己可以从队列的头部存然后从头部取，而别的P可以从尾部取。
+- victim这个从字面上面也可以知道，幸存者嘛，**当进行gc的时候，会将local中的对象移到victim中去，也就是说幸存了一次gc**
+
+![img](https://upload-images.jianshu.io/upload_images/10213518-c5f7694be2ded30a.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/1132)
+
+# 24. sync.Map
+
+https://www.cnblogs.com/jiujuan/p/13365901.html
+
+https://studygolang.com/articles/10345
+
+```go
+type Map struct {
+	// 当涉及到dirty数据的操作的时候，需要使用这个锁
+	mu Mutex
+	// 一个只读的数据结构，因为只读，所以不会有读写冲突。
+	// 所以从这个数据中读取总是安全的。
+	// 实际上，实际也会更新这个数据的entries,如果entry是未删除的(unexpunged), 并不需要加锁。如果entry已经被删除了，需要加锁，以便更新dirty数据。
+	read atomic.Value // readOnly
+	// dirty数据包含当前的map包含的entries,它包含最新的entries(包括read中未删除的数据,虽有冗余，但是提升dirty字段为read的时候非常快，不用一个一个的复制，而是直接将这个数据结构作为read字段的一部分),有些数据还可能没有移动到read字段中。
+	// 对于dirty的操作哦需要加锁，因为对它的操作可能会有读写竞争。
+	// 当dirty为空的时候， 比如初始化或者刚提升完，下一次的写操作会复制read字段中未删除的数据到这个数据中。
+	dirty map[interface{}]*entry
+	// 当从Map中读取entry的时候，如果read中不包含这个entry,会尝试从dirty中读取，这个时候会将misses加一，
+	// 当misses累积到 dirty的长度的时候， 就会将dirty提升为read,避免从dirty中miss太多次。因为操作dirty需要加锁。
+	misses int
+}
+```
+
+```go
+type entry struct {
+	p unsafe.Pointer // *interface{}
+}
+```
+
+p有三种值：
+
+- nil: entry已被删除了，并且m.dirty为nil
+- expunged: entry已被删除了，并且m.dirty不为nil，而且这个entry不存在于m.dirty中
+- 其它： entry是一个正常的值
+
+# 25. golang容器
+
+1. heap
+2. list
+3. ring
+
+- **heap**
+
+    heap通过一组api对已经实现了heap接口的结构进行调整
+
+    ```go
+    package main
+    
+    import (
+    	"container/heap"
+    	"fmt"
+    )
+    
+    type Heap []int
+    
+    func (h *Heap) Len() int {
+    	return len(*h)
+    }
+    
+    func (h *Heap) Less(i, j int) bool {
+    	return (*h)[i] < (*h)[j]
+    }
+    
+    func (h *Heap) Swap(i, j int) {
+    	(*h)[i], (*h)[j] = (*h)[j], (*h)[i]
+    }
+    
+    func (h *Heap) Push(x interface{}) {
+    	*h = append(*h, x.(int))
+    }
+    
+    func (h *Heap) Pop() interface{} {
+    	x := (*h)[h.Len()-1]
+    	*h = (*h)[:h.Len()-1]
+    	return x
+    }
+    
+    func main() {
+    	h := &Heap{}
+    	h.Push(2)
+    	h.Push(4)
+    	h.Push(6)
+    	h.Push(9)
+    	h.Push(1)
+    	h.Push(0)
+    	heap.Init(h)				//api初始化heap
+    	fmt.Printf("%v\n", *h)
+    	heap.Push(h, 100)			//heap放入元素
+    	fmt.Printf("%v\n", *h)		//自动建堆
+    	(*h)[2]= -1					//手动修改元素后使用fix效率更高
+    	heap.Fix(h, 2)				//fix修复堆
+    	fmt.Printf("%v\n", *h)
+    	num := heap.Pop(h)			//弹出元素
+    	fmt.Println(num)	
+    	fmt.Printf("%v\n", *h)
+    }
+    ```
+
+    ```go
+    ///output
+    [0 1 2 9 4 6]
+    [0 1 2 9 4 6 100]
+    [-1 1 0 9 4 6 100]
+    -1
+    [0 1 6 9 4 100]
+    ```
+
+    - **list**
+
+        普通双向列表，并且每一个元素都是一个Interface类型
+
+        ```go
+        // Element is an element of a linked list.
+        type Element struct {
+        	// Next and previous pointers in the doubly-linked list of elements.
+        	// To simplify the implementation, internally a list l is implemented
+        	// as a ring, such that &l.root is both the next element of the last
+        	// list element (l.Back()) and the previous element of the first list
+        	// element (l.Front()).
+        	next, prev *Element
+        
+        	// The list to which this element belongs.
+        	list *List
+        
+        	// The value stored with this element.
+        	Value interface{}
+        }
+        
+        // List represents a doubly linked list.
+        // The zero value for List is an empty list ready to use.
+        type List struct {
+        	root Element // sentinel list element, only &root, root.prev, and root.next are used
+        	len  int     // current list length excluding (this) sentinel element
+        }
+        ```
+
+    - ring(环)
+
+        循环的双向链表
+
+        ![image-20211013165911240](https://gitee.com/dopamine-joker/image-host/raw/master/202110131659301.png)
+
+        
+
+        ```go
+        package main
+        
+        import (
+        	"container/ring"
+        	"fmt"
+        )
+        
+        func printf(x interface{}) {
+        	switch x.(type) {
+        	case int:
+        		fmt.Println(x.(int))
+        	}
+        }
+        
+        func main() {
+        	r1 := ring.New(3)
+        	for i := 0; i < 3; i++ {
+        		r1.Value = i
+        		r1 = r1.Next()
+        	}
+        	r1.Do(printf)
+        	fmt.Println("=====")
+        	r2 := ring.New(3)
+        	for i := 0; i < 3; i++ {
+        		r2.Value = i * 2
+        		r2 = r2.Next()
+        	}
+        	r2.Do(printf)
+        	fmt.Println("=====")
+        	r := r1.Link(r2)			//link先循环绕一圈，然后再将r2指向的节点连接，再循环绕一圈
+        	r.Do(printf)
+        }
+        ```
+
+        ```output
+        2
+        0
+        1
+        =====
+        0
+        2
+        4
+        =====
+        0
+        1
+        2
+        0
+        2
+        4
+        ```
+
+    # 26. context
+
+    ```go
+    func WithValue(parent Context, key, val interface{}) Context			//创建子context,增加新的value
+    func WithCancel(parent Context) (ctx Context, cancel CancelFunc)		//创建子context,并且可以通过cancel取消
+    func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)	//创建子context,伴随过期日期
+    func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)	//创建子context,伴随过期时间	
+    ```
+
+    
+
+    

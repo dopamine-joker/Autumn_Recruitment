@@ -143,6 +143,8 @@ P - processor, a resource that is required to execute Go code.
 
 4. **调度示意图**
 
+![image-20211013001722796](https://gitee.com/dopamine-joker/image-host/raw/master/202110130017878.png)
+
 ![image-20210912001049913](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912001049913.png)
 
 > LRQ: Local Run Queue
