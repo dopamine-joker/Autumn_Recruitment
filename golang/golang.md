@@ -334,7 +334,7 @@ len(s1)=2, cap(s1)=2
 
 # 10. 空导入
 
-使用空导入可以让里面的init()被发现并执行，完成一些初始化。
+使用**空导入可以让里面的init()被发现并执行，完成一些初始化**。
 
 如sql中通过空导入来注册数据库驱动
 
@@ -551,6 +551,18 @@ func main() {
 
 # 16. map非线程安全
 
+注意这里只要指**并发读写**或者**并发写**时不安全，如果是**并发读的话还是安全**的。因为`hashWriting`标记此时不为true
+
+注意在源码中读的话会有这段逻辑
+
+```go
+if h.flags&hashWriting != 0 {
+    throw("concurrent map read and map write")
+}
+```
+
+这也是为什么并发读写不安全，因为写时hashWriting标记为true,此时读的话会出发这段错误逻辑。
+
 https://cloud.tencent.com/developer/article/1539049
 
 sycn.Map
@@ -725,6 +737,8 @@ https://www.jianshu.com/p/8fbbf6c012b2
 
 https://www.cnblogs.com/sunsky303/p/9706210.html
 
+https://golang.google.cn/pkg/sync/#Pool
+
 ```go
 // A Pool is a set of temporary objects that may be individually saved and
 // retrieved.
@@ -796,7 +810,108 @@ type poolLocal struct {
 
 ![img](https://upload-images.jianshu.io/upload_images/10213518-c5f7694be2ded30a.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/1132)
 
+官方example
+
+```go
+package main
+
+import (
+	"bytes"
+	"io"
+	"os"
+	"sync"
+	"time"
+)
+
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		// The Pool's New function should generally only return pointer
+		// types, since a pointer can be put into the return interface
+		// value without an allocation:
+		return new(bytes.Buffer)
+	},
+}
+
+// timeNow is a fake version of time.Now for tests.
+func timeNow() time.Time {
+	return time.Unix(1136214245, 0)
+}
+
+func Log(w io.Writer, key, val string) {
+	b := bufPool.Get().(*bytes.Buffer)			//这里获取对象，若空，调用new创建一个新的
+	b.Reset()
+	// Replace this with time.Now() in a real logger.
+	b.WriteString(timeNow().UTC().Format(time.RFC3339))
+	b.WriteByte(' ')
+	b.WriteString(key)
+	b.WriteByte('=')
+	b.WriteString(val)
+	w.Write(b.Bytes())
+	bufPool.Put(b)								//这里可以把临时对象保存起来，下次获取
+}
+
+func main() {
+	Log(os.Stdout, "path", "/search?q=flowers")
+}
+```
+
+**为什么对象能够存活两次gc，源码解析**
+
+```go
+// sync/pool.go
+
+var (
+	allPoolsMu Mutex
+
+	// allPools is the set of pools that have non-empty primary
+	// caches. Protected by either 1) allPoolsMu and pinning or 2)
+	// STW.
+	allPools []*Pool
+
+	// oldPools is the set of pools that may have non-empty victim
+	// caches. Protected by STW.
+	oldPools []*Pool
+)
+
+// init这里注册了poolCleanup函数，这个注册函数每次gc时都会运行。
+func init() {
+	runtime_registerPoolCleanup(poolCleanup)
+}
+
+func poolCleanup() {
+	// This function is called with the world stopped, at the beginning of a garbage collection.
+	// It must not allocate and probably should not call any runtime functions.
+
+	// Because the world is stopped, no pool user can be in a
+	// pinned section (in effect, this has all Ps pinned).
+
+	// Drop victim caches from all pools.
+	for _, p := range oldPools {
+		p.victim = nil
+		p.victimSize = 0
+	}
+
+	// Move primary cache to victim cache.
+	for _, p := range allPools {
+		p.victim = p.local				//把Local移到victim
+		p.victimSize = p.localSize
+		p.local = nil					//local清空
+		p.localSize = 0
+	}
+
+	// The pools with non-empty primary caches now have non-empty
+	// victim caches and no pools have primary caches.
+	oldPools, allPools = allPools, nil
+}
+```
+
+通过以上的解读，我们可以看到，Get方法并不会对获取到的对象值做任何的保证，**因为放入本地池中的值有可能会在任何时候被删除，但是不通知调用者**。**放入共享池中的值有可能被其他的goroutine偷走**。  所以**对象池比较适合用来存储一些临时切状态无关的数据**，但是不适合用来存储数据库连接的实例，因为存入对象池重的值有可能会在垃圾回收时被删除掉，这违反了数据库连接池建立的初衷。
+
+根据上面的说法，Golang的对象池严格意义上来说是一个临时的对象池，适用于储存一些会在goroutine间分享的临时对象。主要作用是减少GC，提高性能。在Golang中最常见的使用场景是fmt包中的输出缓冲区。
+
 # 24. sync.Map
+
+https://blog.csdn.net/u011957758/article/details/96633984?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522163558216116780274125914%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=163558216116780274125914&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~baidu_landing_v2~default-4-96633984.first_rank_v2_pc_rank_v29&utm_term=go+sync.map
 
 https://www.cnblogs.com/jiujuan/p/13365901.html
 
@@ -831,6 +946,144 @@ p有三种值：
 - nil: entry已被删除了，并且m.dirty为nil
 - expunged: entry已被删除了，并且m.dirty不为nil，而且这个entry不存在于m.dirty中
 - 其它： entry是一个正常的值
+
+| 说明   | 类型                   | 作用                                                         |
+| ------ | ---------------------- | ------------------------------------------------------------ |
+| mu     | Mutex                  | 加锁作用。保护后文的dirty字段                                |
+| read   | atomic.Value           | 存读的数据。因为是atomic.Value类型，只读，所以并发是安全的。实际存的是readOnly的数据结构。 |
+| misses | int                    | 计数作用。每次从read中读失败，则计数+1。                     |
+| dirty  | map[interface{}]*entry | 包含最新写入的数据。当misses计数达到一定值，将其赋值给read。 |
+
+```go
+type readOnly struct {
+    m  map[interface{}]*entry
+    amended bool 
+}
+```
+
+| 说明    | 类型                   | 作用                                                   |
+| ------- | ---------------------- | ------------------------------------------------------ |
+| m       | map[interface{}]*entry | 单纯的map结构                                          |
+| amended | bool                   | Map.dirty的数据和这里的 m 中的数据不一样的时候，为true |
+
+- **查找load()**
+
+```go
+// 由于map并发读是安全的，所以可以直接读
+
+func (m *Map) Load(key interface{}) (value interface{}, ok bool) {
+    // 首先从只读ready的map中查找，这时不需要加锁
+    read, _ := m.read.Load().(readOnly)
+    e, ok := read.m[key]
+    
+    // 如果没有找到，并且read.amended为true，说明dirty中有新数据，从dirty中查找，开始加锁了
+    if !ok && read.amended {
+        m.mu.Lock() // 加锁
+        
+       // 又在 readonly 中检查一遍，因为在加锁的时候 dirty 的数据可能已经迁移到了read中
+        read, _ = m.read.Load().(readOnly)
+        e, ok = read.m[key]
+        
+        // read 还没有找到，并且dirty中有数据
+        if !ok && read.amended {
+            e, ok = m.dirty[key] //从 dirty 中查找数据
+            
+            // 不管m.dirty中存不存在，都将misses + 1
+            // missLocked() 中满足条件后就会把m.dirty中数据迁移到m.read中
+            m.missLocked()
+        }
+        m.mu.Unlock()
+    }
+    if !ok {
+        return nil, false
+    }
+    return e.load()
+}
+
+func (m *Map) missLocked() {
+    m.misses++
+    if m.misses < len(m.dirty) {//misses次数小于 dirty的长度，就不迁移数据，直接返回
+        return
+    }
+    m.read.Store(readOnly{m: m.dirty}) //开始迁移数据，这里是把dirty的全部加到read，由于read和dirty存的是entry的地址，所以覆盖掉相同的key也没什么问题
+    m.dirty = nil   //迁移完dirty就赋值为nil
+    m.misses = 0  //迁移完 misses归0
+}
+```
+
+- **增加store()**
+
+```go
+func (m *Map) Store(key, value interface{}) {
+   // 直接在read中查找值，找到了，就尝试 tryStore() 更新值
+    read, _ := m.read.Load().(readOnly)
+    if e, ok := read.m[key]; ok && e.tryStore(&value) {
+        return
+    }
+    
+    // m.read 中不存在
+    m.mu.Lock()
+    read, _ = m.read.Load().(readOnly)
+    if e, ok := read.m[key]; ok {
+        if e.unexpungeLocked() { // 未被标记成删除，前面讲到entry数据结构时，里面的p值有3种。1.nil 2.expunged，这个值含义有点复杂，可以看看前面entry数据结构 3.正常值
+            
+            m.dirty[key] = e // 加入到dirty里
+        }
+        e.storeLocked(&value) // 更新值
+    } else if e, ok := m.dirty[key]; ok { // 存在于 dirty 中，直接更新
+        e.storeLocked(&value)
+    } else { // 新的值
+        if !read.amended { // m.dirty 中没有新数据，增加到 m.dirty 中
+            // We're adding the first new key to the dirty map.
+            // Make sure it is allocated and mark the read-only map as incomplete.
+            m.dirtyLocked() // 从 m.read中复制未删除的数据
+            m.read.Store(readOnly{m: read.m, amended: true}) 
+        }
+        m.dirty[key] = newEntry(value) //将这个entry加入到m.dirty中
+    }
+    m.mu.Unlock()
+}
+
+func (m *Map) dirtyLocked() {
+	if m.dirty != nil {
+		return
+	}
+
+	read, _ := m.read.Load().(readOnly)
+	m.dirty = make(map[interface{}]*entry, len(read.m))
+	for k, e := range read.m {			//把read中的未删除数据恢复到dirty中
+		if !e.tryExpungeLocked() {
+			m.dirty[k] = e
+		}
+	}
+}
+```
+
+- **删除delete()**
+
+```go
+func (m *Map) Delete(key interface{}) {
+    // 从 m.read 中开始查找
+    read, _ := m.read.Load().(readOnly)
+    e, ok := read.m[key]
+    
+    if !ok && read.amended { // m.read中没有找到，并且可能存在于m.dirty中，加锁查找
+        m.mu.Lock() // 加锁
+        read, _ = m.read.Load().(readOnly) // 再在m.read中查找一次
+        e, ok = read.m[key]
+        if !ok && read.amended { //m.read中又没找到，amended标志位true，说明在m.dirty中
+            delete(m.dirty, key) // 删除
+        }
+        m.mu.Unlock()
+    }
+    if ok { // 在 m.ready 中就直接删除，注意是标记删除
+        e.delete()
+    }
+}
+```
+
+read的作用是在dirty前头优先度，遇到相同元素的时候为了不穿透到dirty，所以采用标记的方式。
+ 同时正是因为这样的机制+amended的标记，可以保证read找不到&&amended=false的时候，dirty中肯定找不到
 
 # 25. golang容器
 
@@ -993,15 +1246,170 @@ p有三种值：
         4
         ```
 
-    # 26. context
+# 26. [context](https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-context/)
 
-    ```go
-    func WithValue(parent Context, key, val interface{}) Context			//创建子context,增加新的value
-    func WithCancel(parent Context) (ctx Context, cancel CancelFunc)		//创建子context,并且可以通过cancel取消
-    func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)	//创建子context,伴随过期日期
-    func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)	//创建子context,伴随过期时间	
-    ```
+在 Goroutine 构成的树形结构中对信号进行同步以减少计算资源的浪费是 `context.Context`的最大作用
 
-    
+```go
+func WithValue(parent Context, key, val interface{}) Context			//创建子context,增加新的value
+func WithCancel(parent Context) (ctx Context, cancel CancelFunc)		//创建子context,并且可以通过cancel取消
+func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)	//创建子context,伴随过期日期
+// WithTimeout returns WithDeadline(parent, time.Now().Add(timeout)).
+func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)	//创建子context,伴随过期时间	
+```
 
-    
+- context.WIthCancel
+
+```go
+func WithCancel(parent Context) (ctx Context, cancel CancelFunc) {
+	if parent == nil {
+		panic("cannot create context from nil parent")
+	}
+	c := newCancelCtx(parent)
+	propagateCancel(parent, &c)
+	return &c, func() { c.cancel(true, Canceled) }
+}
+```
+
+- `context.newCancelCtx` 将传入的上下文包装成私有结构体 context.cancelCtx；
+- `context.propagateCancel`会构建父子上下文之间的关联，当父上下文被取消时，子上下文也会被取消
+
+```go
+type cancelCtx struct {
+	Context
+
+	mu       sync.Mutex            // protects following fields
+	done     atomic.Value          // of chan struct{}, created lazily, closed by first cancel call
+	children map[canceler]struct{} // set to nil by the first cancel call
+	err      error                 // set to non-nil by the first cancel call
+}
+
+// propagateCancel arranges for child to be canceled when parent is.
+func propagateCancel(parent Context, child canceler) {
+	done := parent.Done()
+	if done == nil {
+		return // parent is never canceled
+	}
+
+	select {
+	case <-done:
+		// parent is already canceled
+		child.cancel(false, parent.Err())
+		return
+	default:
+	}
+
+    //parentCancelCtx returns the underlying *cancelCtx for parent.
+	if p, ok := parentCancelCtx(parent); ok {	
+		p.mu.Lock()
+		if p.err != nil {
+			// parent has already been canceled
+			child.cancel(false, p.err)
+		} else {
+			if p.children == nil {
+				p.children = make(map[canceler]struct{})
+			}
+			p.children[child] = struct{}{}		//这里加入到children的slice中，父cancel时会全部取消
+		}
+		p.mu.Unlock()
+	} else {	// 如果父context是用户自定义类型，则需要建立goroutine来同时监听父上下文，如果取消了，调用子context取消
+		atomic.AddInt32(&goroutines, +1)
+		go func() {
+			select {
+			case <-parent.Done():
+				child.cancel(false, parent.Err())
+			case <-child.Done():
+			}
+		}()
+	}
+}
+```
+
+1. 当 `parent.Done() == nil`，也就是 `parent` 不会触发取消事件时，当前函数会直接返回；
+
+2. 当 child的继承链包含可以取消的上下文时，会判断 parent是否已经触发了取消信号；
+
+    - 如果已经被取消，`child` 会立刻被取消；
+    - 如果没有被取消，`child` 会被加入 `parent` 的 `children` 列表中，等待 `parent` 释放取消信号；
+
+3. 当父上下文是开发者自定义的类型、实现了 `context.Context`接口并在 `Done()`
+
+     方法中返回了非空的管道时；
+
+    1. 运行一个新的 Goroutine 同时监听 `parent.Done()` 和 `child.Done()` 两个 Channel；
+2. 在 `parent.Done()` 关闭时调用 `child.cancel` 取消子上下文；
+
+`context.propagateCancel`的作用是在 **`parent` 和 `child` 之间同步取消和结束的信号**，保证在 `parent` 被取消时，`child` 也会收到对应的信号，不会出现状态不一致的情况。
+
+`context.cancelCtx`实现的几个接口方法也没有太多值得分析的地方，该结构体最重要的方法是 `context.cancelCtx.cancel`，该方法会关闭上下文中的 Channel 并向所有的子上下文同步取消信号：
+
+```go
+func (c *cancelCtx) cancel(removeFromParent bool, err error) {
+	if err == nil {
+		panic("context: internal error: missing cancel error")
+	}
+	c.mu.Lock()
+	if c.err != nil {
+		c.mu.Unlock()
+		return // already canceled
+	}
+	c.err = err
+	d, _ := c.done.Load().(chan struct{})
+	if d == nil {
+		c.done.Store(closedchan)
+	} else {
+		close(d)
+	}
+	for child := range c.children {	// 子context全部跟着取消,然后顺着context树逐层调用
+		// NOTE: acquiring the child's lock while holding parent's lock.
+		child.cancel(false, err)
+	}
+	c.children = nil
+	c.mu.Unlock()
+
+	if removeFromParent {
+		removeChild(c.Context, c)
+	}
+}
+```
+
+**context传值**
+
+```go
+func WithValue(parent Context, key, val interface{}) Context {
+	if parent == nil {
+		panic("cannot create context from nil parent")
+	}
+	if key == nil {
+		panic("nil key")
+	}
+	if !reflectlite.TypeOf(key).Comparable() {
+		panic("key is not comparable")
+	}
+	return &valueCtx{parent, key, val}
+}
+
+type valueCtx struct {
+	Context
+	key, val interface{}
+}
+
+func (c *valueCtx) Value(key interface{}) interface{} {
+	if c.key == key {
+		return c.val
+	}
+    return c.Context.Value(key)	//递归调用，从子context顺着往父context查找，知道遇到emptyCtx(Background或Todo)返回nil
+}
+```
+
+**总结**
+
+Go 语言中的 `context.Context`的**主要作用还是在多个 Goroutine 组成的树中同步取消信号以减少对资源的消耗和占用，虽然它也有传值的功能，但是这个功能我们还是很少用到**。
+
+在真正使用传值的功能时我们也应该非常谨慎，使用 `context.Context`传递请求的所有参数一种非常差的设计，比较常见的使用场景是传递请求对应用户的**认证令牌**以及用于进行**分布式追踪的请求 ID**。
+
+# 27 go的int类型大小在64位机器是8字节，32位机器4字节
+
+
+
+​    
