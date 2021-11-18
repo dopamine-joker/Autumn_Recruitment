@@ -151,7 +151,7 @@ P - processor, a resource that is required to execute Go code.
 >
 > GRQ: Global Run Queue
 
-其中P的数量由变量<font color=red>`GOMAXPROCS`</font>环境变量或runtime中的<font color=red>GOMAXPROCS()</font>函数决定的。M的数量由runtime/debug包中的setMaxThreads()决定。如果当前的M阻塞，那就会新建一个新的线程。
+其中P的数量由变量<font color=red>`GOMAXPROCS`</font>环境变量或runtime中的<font color=red>GOMAXPROCS()</font>函数决定的。M的数量由runtime/debug包中的**setMaxThreads()**决定。如果当前的M阻塞，那就会新建一个新的线程。
 
 M的数量与P没有关系。如果当前M阻塞了，则P的goroutine会运行到其他的M上，或者新建一个M。所以可能出现多个M，一个P的情况。
 
