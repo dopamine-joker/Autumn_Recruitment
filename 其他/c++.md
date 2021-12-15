@@ -499,3 +499,82 @@ int main() {
 RTTI是”Runtime Type Information”的缩写，意思是运行时类型信息，它提供了运行时确定对象类型的方法。RTTI并不是什么新的东西，很早就有了这个技术，但是，在实际应用中使用的比较少而已。
 
 # 25. C语言中右移为算数右移(有符号)
+
+# 26. 内存分区
+
+C/C++中内存分5大区：栈，堆，全局/静态存储区，常量存储区，代码区
+
+栈（stack）：指那些由编译器在需要的时候分配，不需要时⾃动清除的变量所在的存储区，效率高，分配的内存空间有限，形参和局部变量分配在栈区，栈是向地地址生长的数据结构，是一块连续的内存
+
+堆（heap）：由程序员控制内存的分配和释放的存储区，是向高地址生长的数据结构，是不连续的存储空间，堆的分配(malloc)和释放(free)有程序员控制，容易造成二次删除和内存泄漏
+
+静态存储区（static）：存放全局变量和静态变量的存储区，初始化的变量放在初始化区，未初始化的变量放在未初始化区。在程序结束后释放这块空间
+
+常量存储区（const）：存放常量字符串的存储区，只能读不能写，const修饰的局部变量存储在常量区（取决于编译器），const修饰的局部变量在栈区
+
+> 这里经验证确实是这样，const局部变量和普通局部变量存储的位置都在栈区，而全局const则存储在常量区。
+>
+> 字符串存储在常量区，而字符串数组存储在栈区。
+>
+> eg: char *p="hello", char p[] = "hello"，前者的"hello"存储在常量区，后者的“hello"存储在栈区
+
+程序代码区：存放源程序二进制代码
+
+# 27. 大端小端
+
+大端:高尾端，数字尾端放高地址
+
+小端:低尾端，数字尾端放低地址
+
+![image-20211121164741981](https://gitee.com/dopamine-joker/image-host/raw/master/202111211647105.png)
+
+# 28. 双重模板
+
+模板类的成员函数也是个模板，则在外实现时需要两层template
+
+```c++
+template<class T>
+class AA {
+public:
+    explicit AA(T _num): num(_num){
+        cout << "AA::AA() 常规模板构造" << endl;
+    }
+
+    template<class V>
+    void func(T val1, V val2);
+
+public:
+    T num;
+};
+
+template<class T>
+template<class V>
+void AA<T>::func(T val1, V val2) {
+    cout << val1 << "," << val2 << endl;
+}
+```
+
+# 29. 模板类和其函数的具体实现要放在同一文件
+
+```c++
+// person.h
+template<class T>
+class person {
+public:
+    explicit person(T num){
+        std::cout << "模板构造" << std::endl;
+    }
+
+    void func(T num);
+};
+
+// 若把下面的实现放在了person.cpp,则编译会报错
+template<class T>
+void person<T>::func(T num) {
+    std::cout << num << std::endl;
+}
+```
+
+结论: 模板和实现不写在不同文件里面，原因:
+
+因为在**编译时模板并不能生成真正的二进制代码**，而是在编译调用模板类或函数的CPP文件时才会去找对应的模板声明和实现，在这种情况下编译器是不知道实现模板类或函数的CPP文件的存在，所以它只能找到模板类或函数的声明而找不到实现，而只好创建一个符号寄希望于链接程序找地址。
