@@ -1,6 +1,9 @@
 # Autumn_Recruitment
 秋招资料整理
 
+# 22/2/8
+面试算法题有时间要记得去刷《剑指offer》，这本书很重要。
+
 # 21/1/18
 其他 https://dopaminer.site/2022/01/08/2021%E7%A7%8B%E6%8B%9B%E5%9B%9E%E9%A1%BE/
 
