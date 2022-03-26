@@ -104,7 +104,7 @@ emoji: 4字节
 
 数组占用的空间是连续的，由于内存连续，CPU能把正在使用的数据缓存得更久。**和slice不一样，这里确确实实就是一块连续空间，而不是共享数组的机制，因此函数传值是会对数组所有元素进行拷贝的，并且修改了形参不会影响到实参**
 
-![image-20211009044544180](https://gitee.com/dopamine-joker/image-host/raw/master/202110090445324.png)
+![image-20211009044544180](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090445324.png)
 
 初始化方法
 
@@ -126,13 +126,13 @@ array := [5]*int{0: new(int), 1: new(int)}
 *array[1] = 20
 ```
 
-![image-20211009045540555](https://gitee.com/dopamine-joker/image-host/raw/master/202110090455701.png)
+![image-20211009045540555](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090455701.png)
 
 - 数组变量的类型包括**<font color=red>数组长度</font>**和**<font color=red>每个元素的类型</font>**。只有两部分都相同的数组，才是类型相同的数组，才能相互赋值。
 
 - 如果把一个指针数组赋值给另外一个，则两个指针指向同一个底层数组同样这两个指针类型要一样才可以
 
-    ![image-20211009045843036](https://gitee.com/dopamine-joker/image-host/raw/master/202110090458252.png)
+    ![image-20211009045843036](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090458252.png)
 
 # 7. [slice原理](https://studygolang.com/articles/7118)
 
@@ -152,7 +152,7 @@ type slice struct {
 }
 ```
 
-![image-20211009050830589](https://gitee.com/dopamine-joker/image-host/raw/master/202110090508754.png)
+![image-20211009050830589](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090508754.png)
 
 ![img](http://images2015.cnblogs.com/blog/496176/201605/496176-20160514133733937-1151272381.png)
 
@@ -160,13 +160,13 @@ type slice struct {
 
 **nil切片**
 
-![image-20211009051005557](https://gitee.com/dopamine-joker/image-host/raw/master/202110090510730.png)
+![image-20211009051005557](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090510730.png)
 
 <font color=red>**注意nil切片也可以使用append**</font>
 
 **空切片**
 
-![image-20211009051211557](https://gitee.com/dopamine-joker/image-host/raw/master/202110090512753.png)
+![image-20211009051211557](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090512753.png)
 
 **<font color=red>nil切片和空切片的区别</font>**
 
@@ -213,7 +213,7 @@ slice := []int64{10,20,30,40,50}
 newSlice := slice[1:3]
 ```
 
-![image-20211009053431369](https://gitee.com/dopamine-joker/image-host/raw/master/202110090534580.png)
+![image-20211009053431369](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110090534580.png)
 
 **!!!!这种情况对于string也同理**
 
@@ -272,7 +272,7 @@ fmt.Println(slice2)
 slice := [][]int{{10}, {100, 200}}
 ```
 
-![image-20211009181046394](https://gitee.com/dopamine-joker/image-host/raw/master/202110091810464.png)
+![image-20211009181046394](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110091810464.png)
 
 append时 slice容量的变化规律
 
@@ -618,11 +618,11 @@ type Map struct {
 
 内存模型
 
-![image-20211012234757134](https://gitee.com/dopamine-joker/image-host/raw/master/202110122347210.png)
+![image-20211012234757134](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110122347210.png)
 
 方法集规则
 
-![image-20211012235009967](https://gitee.com/dopamine-joker/image-host/raw/master/202110122350021.png)
+![image-20211012235009967](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110122350021.png)
 
 # 22. 嵌套地址相等验证
 
@@ -1202,7 +1202,7 @@ read的作用是在dirty前头优先度，遇到相同元素的时候为了**不
 
         循环的双向链表
 
-        ![image-20211013165911240](https://gitee.com/dopamine-joker/image-host/raw/master/202110131659301.png)
+        ![image-20211013165911240](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110131659301.png)
 
         
 
@@ -1428,15 +1428,15 @@ Go 语言中的 `context.Context`的**主要作用还是在多个 Goroutine 组�
 
 在go 1.14以前，下面代码会阻塞
 
-![image-20211031211337073](https://gitee.com/dopamine-joker/image-host/raw/master/202110312116560.png)    
+![image-20211031211337073](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110312116560.png)    
 
 阻塞原因：
 
-![image-20211031211435027](https://gitee.com/dopamine-joker/image-host/raw/master/202110312116143.png)
+![image-20211031211435027](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110312116143.png)
 
 stop the world要抢占所有的P，对还在运行的P，会设置字段`g.stackguard0 = stackPreempt`和`sched.gcwaiting`让其知道GC在等待它。
 
-![image-20211031211624703](https://gitee.com/dopamine-joker/image-host/raw/master/202110312116963.png)
+![image-20211031211624703](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110312116963.png)
 
 stackPreempt让G不执行栈增长而去制定一次schedule，而schedule会检测gcwaiting，若为true，则让出P。for循环中没机会执行栈增长代码，从而不知道要让出P。
 
@@ -1444,10 +1444,10 @@ stackPreempt让G不执行栈增长而去制定一次schedule，而schedule会检
 
 # 29. 堆内存
 
-![image-20211031212923066](https://gitee.com/dopamine-joker/image-host/raw/master/202110312129190.png)
+![image-20211031212923066](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110312129190.png)
 
 arena在amd64 linux架构下，arena的大小为64MB，每个arena包含8192个page，每个8KB，并且按照需求划分出不同的span，每一个span包含一组连续的page，并且按照特定规格划分成等大的内存块。
 
 go中按照一组预置的大小把内存页划分成块，然后把不同规格的内存块放入对应的空闲链表，使用时分配器找到最匹配的规格，然后从对应空闲链表中分配一个内存块。
 
-![image-20211031213053019](https://gitee.com/dopamine-joker/image-host/raw/master/202110312130118.png)
+![image-20211031213053019](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110312130118.png)

@@ -16,7 +16,7 @@ stl将这两个阶段的步骤分开
 
 stl中的构造和析构
 
-![image-20210908165031991](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908165031991.png)
+![image-20210908165031991](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908165031991.png)
 
 ## 3. std::alloc
 
@@ -28,7 +28,7 @@ stl中的内存分配和释放
 
 所以默认都是第二级。
 
-![image-20210908165557291](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908165557291.png)
+![image-20210908165557291](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908165557291.png)
 
 # 2. Traits编程技法
 
@@ -84,7 +84,7 @@ allocator_type get_allocator() const noexcept;	//Get allocator
 - 没有capacity
 - vector重载了`==` ,`!=`, `<`, `>`, `<=`, `>=`
 
-![image-20210908193705837](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908193705837.png)
+![image-20210908193705837](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908193705837.png)
 
 ```c++
 // modifiers api
@@ -104,17 +104,17 @@ void sort(Compare comp);
 void reverse();		//反转
 ```
 
-![image-20210908194756466](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908194756466.png)
+![image-20210908194756466](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908194756466.png)
 
 # 5. deque
 
 deque是双向开口的连续线程空间
 
-![image-20210908195113373](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908195113373.png)
+![image-20210908195113373](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908195113373.png)
 
-![image-20210908200526272](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908200526272.png)
+![image-20210908200526272](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908200526272.png)
 
-![image-20210908200424303](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908200424303.png)
+![image-20210908200424303](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908200424303.png)
 
 ```C++
 // api

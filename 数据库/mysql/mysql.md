@@ -48,9 +48,9 @@ commit;
 
    **修正，blog中2.3标题为页锁**
    
-   ![image-20210908160424901](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160424901.png)
+   ![image-20210908160424901](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160424901.png)
 
-![image-20210908160327613](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160327613.png)
+![image-20210908160327613](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160327613.png)
 
 # 4. [数据库事务隔离级别](https://blog.csdn.net/riemann_/article/details/89901626?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161720291516780357280628%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=161720291516780357280628&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-1-89901626.first_rank_v2_pc_rank_v29&utm_term=%E6%95%B0%E6%8D%AE%E5%BA%93%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB&spm=1018.2226.3001.4187)
 
@@ -77,7 +77,7 @@ commit;
   **幻读的重点在于新增或者删除**
   同样的条件 ,  第 1 次和第 2 次读出来的记录数不一样。指的是一个事务在前后两次查询同一个范围的时候,后一次查询看到了前一次查询没有看到 的数据行
   
-  ![image-20210908160302805](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160302805.png)
+  ![image-20210908160302805](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160302805.png)
 
 # 5. [Mysql的MVCC(多版本并发控制)机制](https://blog.csdn.net/riemann_/article/details/94838870?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522161720399616780271574701%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=161720399616780271574701&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-2-94838870.first_rank_v2_pc_rank_v29&utm_term=MVCC&spm=1018.2226.3001.4187)
 
@@ -105,15 +105,15 @@ InnoDB为新插入的每一行保存当前系统版本号作为行版本号。
 **DELETE**
 InnoDB为删除的每一行保存当前系统版本号作为行删除标识。
 
-![image-20210912091918211](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091918211.png)
+![image-20210912091918211](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210912091918211.png)
 
-![image-20210912091853965](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091853965.png)
+![image-20210912091853965](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210912091853965.png)
 
 **UPDATE**
 InnoDB为插入一行新记录，保存当前系统版本号作为行版本号，同时保存当前系统版本号到原来的行作为行删除标识。
 保存这两个额外系统版本号，使大多数读操作都可以不用加锁。这样设计使得读数据操作很简单，性能很好，并且也能保证只会读取到符合标准的行，不足之处是每行记录都需要额外的存储空间，需要做更多的行检查工作，以及一些额外的维护工作
 
-![image-20210912091947277](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912091947277.png)
+![image-20210912091947277](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210912091947277.png)
 
 # 6. Next-Key Locks
 
@@ -125,7 +125,7 @@ Next-Key Locks 是 MySQL 的 InnoDB 存储引擎的一种锁实现。
 
 [click](https://ac.nowcoder.com/discuss/230450?type=6)
 
-![image-20210912110202171](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912110202171.png)
+![image-20210912110202171](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210912110202171.png)
 
 这里为什么update会涉及到444这一行？因为<font color=red>select是快照读，update是当前读</font>
 
@@ -279,17 +279,17 @@ InnoDB**辅助索引**的访问需要**两次索引查找**，第一次从辅助
 
 B+树 叶子节点包含数据表中行记录就是**聚簇索引**（索引和数据是一块的）。
 
-![image-20210908160527591](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160527591.png)
+![image-20210908160527591](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160527591.png)
 
 B+树 叶子节点没包含数据表中行记录就是**非聚簇索引**（索引和数据是分开的）。innodb中辅助索引保存的是索引值和**主键值**，而在MyISAN保存的是索引值和**行指针**。
 
-![image-20210908160539364](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160539364.png)
+![image-20210908160539364](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160539364.png)
 
 MyISAM也使用B+Tree作为索引结构，但具体实现方式却与InnoDB截然不同。**MyISAM使用的都是非聚簇索引**
 
-![image-20210908160548013](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160548013.png)
+![image-20210908160548013](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160548013.png)
 
-![image-20210908160637731](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160637731.png)
+![image-20210908160637731](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160637731.png)
 
  **InnoDB索引**和**MyISAM索引**的区别:
 
@@ -433,7 +433,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
    mysql注入的例子:
 
-![image-20210908160800573](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160800573.png)
+![image-20210908160800573](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160800573.png)
 
 6. **sql注入的主要特点**
 
@@ -526,7 +526,7 @@ insert into fulltext_test values(null,'aaaa','aaaa');
 
     Hash索引本身确实不支持范围查询，因为它是通过Hash算法来存储的。Memory引擎中使用Hash索引，但是使用Memory引擎的表是可以进行范围查询的，只是它在范围查询时Hash索引会失效。
 
-![image-20210908160832572](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160832572.png)
+![image-20210908160832572](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160832572.png)
 
 13. **分析SQL的执行**
 
@@ -732,11 +732,11 @@ select id from url where url="http://www.mysql.com" and url_crc = CRC32("http://
 
 
 
-![image-20210908161043196](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908161043196.png)
+![image-20210908161043196](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908161043196.png)
 
 **HASH索引本身是不支持范围查询的，但是如使用Memory存储引擎的表还是可以进行范围查询操作，只是此时的HASH索引会失效**
 
-![image-20210908160905548](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210908160905548.png)
+![image-20210908160905548](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210908160905548.png)
 
 # 19. 回表和索引覆盖
 
@@ -979,7 +979,7 @@ https://www.bilibili.com/read/cv8405294/
 
 # 30. 联合索引底层结构怎么样
 
-![Selection_003](https://gitee.com/dopamine-joker/image-host/raw/master/image/Selection_003.png)
+![Selection_003](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/Selection_003.png)
 
 这里同样使用b+树，不过排序时按照字段的顺序来，先比较第一个字段的大小，再比较第二个...依次类推来排序的。
 
@@ -1004,9 +1004,9 @@ redolog的刷盘会在系统空闲时进行。
 
 # 32. MYSQL主从同步
 
-![image-20211004000114393](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20211004000114393.png)
+![image-20211004000114393](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20211004000114393.png)
 
-![image-20211004000142576](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20211004000142576.png)
+![image-20211004000142576](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20211004000142576.png)
 
 # 33. MVCC版本链
 

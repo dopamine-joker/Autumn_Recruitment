@@ -16,7 +16,7 @@ P - processor, a resource that is required to execute Go code.
 
 其中P是一个比较抽象的概念。并不是特指物理机上的CPU。可以理解为M执行时的上下文。
 
-![image-20210911220833543](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911220833543.png)
+![image-20210911220833543](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911220833543.png)
 
 **每一个goroutine(go协程)都运行在一个内核线程上(M)，并且这个M是与一个P进行相关联的。**
 
@@ -43,19 +43,19 @@ P - processor, a resource that is required to execute Go code.
 
     Go会首先根据机器的逻辑CPU个数(可自己设定)创建不同的`P`。并且把他们保存到一个空闲`P`列表中。
 
-    ![image-20210911221444444](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911221444444.png)
+    ![image-20210911221444444](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911221444444.png)
 
     然后，一个**新的goroutine**或者**准备运行的goroutines**会唤醒一个`P`以便来服务这个goroutine。然后这个`P`将会创建一个与内核线程相关联的`M`。
 
-    ![image-20210916183056266](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210916183056266.png)
+    ![image-20210916183056266](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210916183056266.png)
 
     然而，像P那样，如果一个没有被使用的`M`(即**此时没有等待运行的goroutine**)从系统调用中返回，或甚至被垃圾收集器强制停止，则它会返回到空闲的`M`队列中。
 
-    ![image-20210911222409893](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911222409893.png)
+    ![image-20210911222409893](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911222409893.png)
 
     在程序引导时，Go就已经创建了一些与内核线程关联的`M`。在这个代码例子中，打印`hello`的线程将会使用main这个goroutine，然后打印`world`的线程将会从`M`和`P`的空闲列表中取出一个`M`和`P`。(这里之所以第一个是用的main线程是因为这里的main在`wg.wait()`处等待，即阻塞，则它对应P和M会被让出来供其他使用)
 
-    ![image-20210911222758712](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911222758712.png)
+    ![image-20210911222758712](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911222758712.png)
 
 3. **系统调用**
 
@@ -77,7 +77,7 @@ P - processor, a resource that is required to execute Go code.
 
     工作流程:
 
-    ![image-20210911223729392](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911223729392.png)
+    ![image-20210911223729392](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911223729392.png)
 
     现在`p0`已经在空闲列表中并且是可被使用的。然后，一旦打开文件的系统调用退出，则Go将遵循下面规则执行只到其中一个被满足才退出
 
@@ -107,11 +107,11 @@ P - processor, a resource that is required to execute Go code.
 
     一旦第一次系统调用完成并明确表示资源尚未就绪，则goroutine会停驻直到network poller通知它资源已经准备好了。在这个例子中，线程`M`将不会被阻塞。
 
-    ![image-20210911230642946](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911230642946.png)
+    ![image-20210911230642946](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911230642946.png)
 
     当GO调度器等待时，goroutine将会再次执行。在成功获取goroutine的信息后，调度器将会询问network poller是否该goroutine在等待运行。
 
-    ![image-20210911230921309](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911230921309.png)
+    ![image-20210911230921309](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911230921309.png)
 
     如果多个goroutine已经准备就绪，则只有一个会被运行，多余的会加入到全局队列并等待调度执行。
 
@@ -143,9 +143,9 @@ P - processor, a resource that is required to execute Go code.
 
 4. **调度示意图**
 
-![image-20211013001722796](https://gitee.com/dopamine-joker/image-host/raw/master/202110130017878.png)
+![image-20211013001722796](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202110130017878.png)
 
-![image-20210912001049913](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210912001049913.png)
+![image-20210912001049913](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210912001049913.png)
 
 > LRQ: Local Run Queue
 >
@@ -185,7 +185,7 @@ M的数量与P没有关系。如果当前M阻塞了，则P的goroutine会运行�
 
 6. **go func(){}**
 
-![image-20210911225050563](https://gitee.com/dopamine-joker/image-host/raw/master/image/image-20210911225050563.png)
+![image-20210911225050563](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/image/image-20210911225050563.png)
 
 这里当M阻塞时，会将M从P解除，把G运行到其他空闲的M或创建新的M(再来一个M)
 

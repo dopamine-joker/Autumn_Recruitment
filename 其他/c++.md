@@ -526,7 +526,7 @@ C/C++中内存分5大区：栈，堆，全局/静态存储区，常量存储区�
 
 小端:低尾端，数字尾端放低地址
 
-![image-20211121164741981](https://gitee.com/dopamine-joker/image-host/raw/master/202111211647105.png)
+![image-20211121164741981](https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111211647105.png)
 
 # 28. 双重模板
 

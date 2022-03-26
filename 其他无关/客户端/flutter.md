@@ -57,7 +57,7 @@ class FlexDemo extends StatelessWidget {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082213034.png" alt="image-20211108221259906" style="zoom:50%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082213034.png" alt="image-20211108221259906" style="zoom:50%;" />
 
 # 3. [Wrap](https://api.flutter.dev/flutter/widgets/Wrap-class.html)
 
@@ -124,7 +124,7 @@ class _WrapDemoState extends State<WrapDemo> {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082256633.png" alt="image-20211108225656501" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082256633.png" alt="image-20211108225656501" style="zoom:80%;" />
 
 # 4. [Stack](https://api.flutter.dev/flutter/widgets/Stack-class.html)
 
@@ -176,7 +176,7 @@ class StackDemo extends StatelessWidget {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082301600.png" alt="image-20211108230102548" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082301600.png" alt="image-20211108230102548" style="zoom:80%;" />
 
 # 5. [align](https://api.flutter.dev/flutter/widgets/Align-class.html)
 
@@ -210,7 +210,7 @@ class AlignDemo extends StatelessWidget {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082303172.png" alt="image-20211108230350125" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082303172.png" alt="image-20211108230350125" style="zoom:80%;" />
 
 # 6. [container](https://api.flutter.dev/flutter/widgets/Container-class.html)
 
@@ -239,7 +239,7 @@ class EdgeDemo extends StatelessWidget {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082307398.png" alt="image-20211108230758312" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082307398.png" alt="image-20211108230758312" style="zoom:80%;" />
 
 # 7. DecoratedBox
 
@@ -436,9 +436,9 @@ class MyDrawer extends StatelessWidget {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082320477.png" alt="image-20211108232009080" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082320477.png" alt="image-20211108232009080" style="zoom:80%;" />
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082320737.png" alt="image-20211108232025589" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082320737.png" alt="image-20211108232025589" style="zoom:80%;" />
 
 # 9. [BottomNavigationBar](https://api.flutter.dev/flutter/material/BottomNavigationBar-class.html)
 
@@ -529,7 +529,7 @@ class _BottomNavigatorBarDemoState extends State<BottomNavigatorBarDemo> {
 }
 ```
 
-<img src="https://gitee.com/dopamine-joker/image-host/raw/master/202111082323463.png" alt="image-20211108232346163" style="zoom:80%;" />
+<img src="https://cdn.jsdelivr.net/gh/dopamine-joker/image-host/202111082323463.png" alt="image-20211108232346163" style="zoom:80%;" />
 
 # 9. [Scrolling widgets](https://flutter.dev/docs/development/ui/widgets/scrolling)
 
